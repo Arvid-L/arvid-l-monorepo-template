@@ -1,13 +1,12 @@
-import { getGreeting } from '../support/app.po';
-
 describe('frontend-e2e', () => {
-  beforeEach(() => cy.visit('/'));
+  beforeEach(() => {
+    cy.visit('/');
+    cy.get('app-root').should('exist');
+  });
 
-  it('should display welcome message', () => {
-    // Custom command example, see `../support/commands.ts` file
-    cy.login('my-email@something.com', 'myPassword');
-
-    // Function helper example, see `../support/app.po.ts` file
-    getGreeting().contains(/Welcome/);
+  it('should display app and template title', () => {
+    cy.contains('h1', 'Arvid L Monorepo Frontend App').should('be.visible');
+    cy.contains('h1', 'Empty Template Component').should('be.visible');
+    cy.contains('p', '{ "message": "Healthy" }').should('be.visible');
   });
 });

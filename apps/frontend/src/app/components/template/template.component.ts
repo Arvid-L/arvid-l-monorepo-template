@@ -8,6 +8,7 @@ import {
 import { CommonModule } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import { ApiResponse } from '@arvid-l-monorepo-template/shared';
+import { environment } from '../../environments/environment';
 
 type TemplateData = { message: string };
 
@@ -27,7 +28,7 @@ export class TemplateComponent implements OnInit {
 
   ngOnInit(): void {
     this.httpClient
-      .get<ApiResponse<TemplateData>>('http://localhost:3000')
+      .get<ApiResponse<TemplateData>>(`${environment.apiUrl}/health`)
       .subscribe((response) => {
         this.apiResponse.set(response);
       });

@@ -5,7 +5,7 @@ export default defineConfig({
     ...nxE2EPreset(__filename, {
       cypressDir: 'src',
       webServerCommands: {
-        default: 'npx nx run frontend:serve',
+        default: 'nx run api:serve & nx run frontend:serve:e2e',
         production: 'npx nx run frontend:serve-static',
       },
       ciWebServerCommand: 'npx nx run frontend:serve-static',
