@@ -1,0 +1,17 @@
+meta {
+  name: Update Example
+  type: http
+  seq: 3
+}
+
+patch {
+  url: {{baseUrl}}/examples/c0284115-05f8-451f-9128-193cc1f0a3cc
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "type": "type_a"
+  }
+}

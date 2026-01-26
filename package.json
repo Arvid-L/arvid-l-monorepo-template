@@ -7,7 +7,8 @@
     "lint": "nx run-many --target=lint",
     "build": "nx run-many --target=build",
     "quality": "nx run-many --target=test --target=lint --target=build",
-    "serve:all": "nx run-many --target=serve"
+    "serve:all": "nx run-many --target=serve",
+    "db:migrate": "nx migrate api"
   },
   "private": true,
   "dependencies": {
@@ -22,9 +23,13 @@
     "@angular/platform-browser-dynamic": "~21.1.0",
     "@angular/router": "~21.1.0",
     "@nestjs/common": "^11.0.0",
+    "@nestjs/config": "^4.0.2",
     "@nestjs/core": "^11.0.0",
     "@nestjs/platform-express": "^11.0.0",
     "axios": "^1.6.0",
+    "dotenv": "^17.2.3",
+    "kysely": "^0.28.10",
+    "pg": "^8.17.2",
     "reflect-metadata": "^0.1.13",
     "rxjs": "~7.8.0"
   },
@@ -55,6 +60,7 @@
     "@swc/helpers": "~0.5.11",
     "@types/jest": "^30.0.0",
     "@types/node": "20.19.9",
+    "@types/pg": "^8.16.0",
     "@typescript-eslint/utils": "^8.40.0",
     "angular-eslint": "^21.0.1",
     "cypress": "^15.8.0",

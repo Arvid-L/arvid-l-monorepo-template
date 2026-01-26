@@ -1,0 +1,48 @@
+# Node modules
+node_modules
+npm-debug.log
+
+# Nx cache
+.nx
+.angular
+
+# Distribution folders
+dist
+build
+tmp
+
+# IDE
+.idea
+.vscode
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Git
+.git
+.gitignore
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# Test coverage
+coverage
+
+# E2E test results
+apps/api-e2e
+apps/frontend-e2e
+
+# Documentation
+*.md
+docs
+
+# Docker files
+Dockerfile
+docker-compose*.yml
+.dockerignore

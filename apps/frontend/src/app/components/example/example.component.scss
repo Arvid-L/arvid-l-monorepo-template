@@ -1,0 +1,53 @@
+.example-container {
+  padding: 24px;
+  max-width: 1200px;
+  margin: 0 auto;
+
+  h1 {
+    margin-bottom: 24px;
+  }
+}
+
+.create-form {
+  margin-bottom: 24px;
+
+  .form-row {
+    display: flex;
+    gap: 16px;
+    align-items: flex-start;
+
+    mat-form-field {
+      flex: 1;
+    }
+
+    button {
+      margin-top: 8px;
+    }
+  }
+}
+
+.table-container {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+}
+
+.example-table {
+  width: 100%;
+
+  th {
+    font-weight: 600;
+  }
+
+  td,
+  th {
+    padding: 16px;
+  }
+}
+
+.no-data {
+  padding: 48px;
+  text-align: center;
+  color: rgba(0, 0, 0, 0.54);
+}

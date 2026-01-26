@@ -1,0 +1,18 @@
+meta {
+  name: Create Example
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/examples
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "name": "Test Example",
+    "type": "type_a"
+  }
+}

@@ -9,17 +9,35 @@
       "executor": "nx:run-commands",
       "options": {
         "command": "webpack-cli build",
-        "args": ["--node-env=production"],
-        "cwd": "apps/api"
+        "args": [
+          "--node-env=production"
+        ],
+        "cwd": "apps/api",
+        "assets": [
+          {
+            "glob": "**/*",
+            "input": "apps/api/src/database/migrations",
+            "output": "migrations"
+          }
+        ]
       },
       "configurations": {
         "development": {
-          "args": ["--node-env=development"]
+          "args": [
+            "--node-env=development"
+          ]
+        },
+        "e2e": {
+          "args": [
+            "--node-env=e2e"
+          ]
         }
       }
     },
     "prune-lockfile": {
-      "dependsOn": ["build"],
+      "dependsOn": [
+        "build"
+      ],
       "cache": true,
       "executor": "@nx/js:prune-lockfile",
       "outputs": [
@@ -31,42 +49,72 @@
       }
     },
     "copy-workspace-modules": {
-      "dependsOn": ["build"],
+      "dependsOn": [
+        "build"
+      ],
       "cache": true,
-      "outputs": ["{workspaceRoot}/dist/apps/api/workspace_modules"],
+      "outputs": [
+        "{workspaceRoot}/dist/apps/api/workspace_modules"
+      ],
       "executor": "@nx/js:copy-workspace-modules",
       "options": {
         "buildTarget": "build"
       }
     },
     "prune": {
-      "dependsOn": ["prune-lockfile", "copy-workspace-modules"],
+      "dependsOn": [
+        "prune-lockfile",
+        "copy-workspace-modules"
+      ],
       "executor": "nx:noop"
     },
     "serve": {
       "continuous": true,
       "executor": "@nx/js:node",
       "defaultConfiguration": "development",
-      "dependsOn": ["build"],
+      "dependsOn": [
+        "build"
+      ],
       "options": {
         "buildTarget": "api:build",
         "runBuildTargetDependencies": false
       },
       "configurations": {
         "development": {
-          "buildTarget": "api:build:development"
+          "buildTarget": "api:build:development",
+          "args": [
+            "--node-env=development"
+          ]
         },
         "production": {
-          "buildTarget": "api:build:production"
+          "buildTarget": "api:build:production",
+          "args": [
+            "--node-env=production"
+          ]
+        },
+        "e2e": {
+          "buildTarget": "api:build:e2e",
+          "args": [
+            "--node-env=e2e"
+          ]
         }
       }
     },
     "test": {
       "executor": "@nx/jest:jest",
-      "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
+      "outputs": [
+        "{workspaceRoot}/coverage/{projectRoot}"
+      ],
       "options": {
         "jestConfig": "apps/api/jest.config.cts",
         "passWithNoTests": true
+      }
+    },
+    "create-migration": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "tsx tools/scripts/create-migration.ts {args}",
+        "cwd": "{workspaceRoot}"
       }
     }
   }

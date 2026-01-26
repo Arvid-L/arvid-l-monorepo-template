@@ -1,13 +1,14 @@
 import { Route } from '@angular/router';
-import { TemplateComponent } from './components/template/template.component';
+import { ExampleComponent } from './components/example';
+import { ROUTES } from './core/constants/routes.constants';
 
 export const appRoutes: Route[] = [
   {
-    path: '',
-    component: TemplateComponent,
+    path: ROUTES.EXAMPLES,
+    component: ExampleComponent,
   },
   {
     path: '**',
-    redirectTo: '',
+    redirectTo: ROUTES.EXAMPLES,
   },
 ];
