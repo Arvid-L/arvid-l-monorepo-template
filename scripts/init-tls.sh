@@ -37,13 +37,19 @@ $COMPOSE run --rm --entrypoint certbot certbot certonly \
     --webroot -w /var/www/certbot \
     -d "$DOMAIN" \
     --email "$LETSENCRYPT_EMAIL" \
-    --agree-tos --no-eff-email
+    --agree-tos --no-eff-email \
+    --keep-until-expiring
 
 echo "🔧 Switching to HTTPS config + enabling auto-renewal..."
 sed -i 's/^NGINX_TEMPLATES=.*/NGINX_TEMPLATES=templates-tls/' "$ENV_FILE"
 sed -i 's/^COMPOSE_PROFILES=.*/COMPOSE_PROFILES=tls/' "$ENV_FILE"
 grep -q '^NGINX_TEMPLATES=' "$ENV_FILE" || echo 'NGINX_TEMPLATES=templates-tls' >> "$ENV_FILE"
 grep -q '^COMPOSE_PROFILES=' "$ENV_FILE" || echo 'COMPOSE_PROFILES=tls' >> "$ENV_FILE"
+
+# Compose gives OS environment precedence over --env-file: the values sourced
+# at the top of this script would silently override the file edits above.
+export NGINX_TEMPLATES=templates-tls
+export COMPOSE_PROFILES=tls
 
 $COMPOSE --profile tls up -d --force-recreate nginx certbot
 
