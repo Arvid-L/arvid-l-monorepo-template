@@ -27,25 +27,29 @@
 
 The template today can only run a dev DB. None of the production containerization exists. Port + generalize from Ecclesio (`~/dev/ecclesio`), which has working versions of all of this.
 
-- [ ] **`apps/api/Dockerfile`** — multi-stage. Stage 1 `nx build api` (+ `prune-lockfile`, `copy-workspace-modules`). Runtime stage `node:22-alpine`: copy `dist/apps/api`, its pruned `package.json` + `workspace_modules`, `npm ci --omit=dev`, `CMD ["node","main.js"]`. Do **not** copy the whole monorepo into the runtime image.
-- [ ] **`apps/frontend/Dockerfile`** — multi-stage. Build stage `nx build frontend`; runtime `nginx:alpine` serving `dist/apps/frontend/browser`, with an SPA-fallback nginx conf.
-- [ ] **`docker-compose.prod.yml`** — `postgres` + `api` + `frontend` + `nginx` (+ certbot). Parametrize container/volume names by a `PROJECT_NAME`/`ENV_NAME` var. Bind DB to `127.0.0.1:5432` only. Model on Ecclesio's `docker-compose-prod.yml`.
-- [ ] **`infrastructure/nginx/`** — `nginx.conf` + `default.conf`: serve FE static, reverse-proxy `/api` → `api:3000`, gzip, security headers, HTTP→HTTPS redirect, `/etc/letsencrypt` mount. Copy from Ecclesio's `infrastructure/nginx/`.
-- [ ] **TLS bootstrap** — a documented one-time certbot step (Ecclesio assumes `/etc/letsencrypt` already exists). Add `scripts/init-tls.sh` or README steps.
-- [ ] **`scripts/deploy-remote.sh`** + **`scripts/redeploy.sh`** — generalize Ecclesio's: replace hardcoded `ecclesio` / `ecclesio-prod` / `/opt/ecclesio` with env vars (`PROJECT_NAME`, `REMOTE_HOST`, `REMOTE_PATH`). Keep the hostname safety-guard pattern.
-- [ ] **`.env.production.example`** + **`.env.example`** (committed, no secrets). Real `.env.production` is scp'd by the deploy script, never committed.
-- [ ] **Server provisioning notes** (README or `docs/HETZNER-SETUP.md`): Docker install, `ufw` firewall (80/443/22), DNS A-record, non-root deploy user, `/opt/<project>` layout, first `git clone`.
+- [x] **`apps/api/Dockerfile`** — multi-stage. Note: the planned `prune-lockfile`/`copy-workspace-modules` targets were broken AND redundant (webpack's `generatePackageJson: true` already emits a pruned `package.json`/`package-lock.json` into `dist/apps/api`, shared lib is bundled into `main.js`); those targets were removed. Runtime = `node:22-alpine`, `npm ci --omit=dev` against the generated package files, `CMD ["node","main.js"]`.
+- [x] **`apps/frontend/Dockerfile`** — multi-stage, runtime `nginx:alpine` + SPA-fallback conf (`apps/frontend/nginx.conf`).
+- [x] **`docker-compose.prod.yml`** — postgres + api + frontend + nginx + certbot (tls profile). Parametrized via `PROJECT_NAME`/`ENV_NAME`, DB bound to `127.0.0.1`, healthchecks wired (use `127.0.0.1` in-container, not `localhost` — busybox wget prefers ::1).
+- [x] **`infrastructure/nginx/`** — two envsubst template sets rendered by the stock nginx image: `templates-http` (local smoke test + pre-TLS bootstrap) and `templates-tls` (redirect + 443 with `${DOMAIN}` certs). Switched via `NGINX_TEMPLATES` in `.env.production`.
+- [x] **TLS bootstrap** — `scripts/init-tls.sh`: certbot webroot issuance, flips `NGINX_TEMPLATES=templates-tls` + `COMPOSE_PROFILES=tls`, restarts nginx. Renewal runs as the certbot compose service; nginx reloads every 6h.
+- [x] **`scripts/deploy-remote.sh`** + **`scripts/redeploy.sh`** — generalized; config comes from `.env.production` (`PROJECT_NAME`, `DEPLOY_HOST`, `DEPLOY_USER`, `DEPLOY_PATH`), hostname guard kept (`<PROJECT_NAME>-<ENV_NAME>`, `EXPECTED_HOSTNAME` override).
+- [x] **`.env.production.example`** + **`.env.example`** committed; `.env*` gitignored except examples + the non-secret `.env.dev`/`.env.e2e`.
+- [x] **Server provisioning notes** — `docs/HETZNER-SETUP.md`.
+
+**Verified 2026-07-12:** `nx run-many -t lint test build` green (5 projects); local `docker compose -f docker-compose.prod.yml --env-file .env.production up --build` → all 4 containers healthy, `GET /api/health` pings the DB through nginx, FE loads through nginx, example CRUD + validation errors work end-to-end, migrations run on boot; `templates-tls` config passes `nginx -t` (self-signed cert smoke test).
 
 ---
 
 ## P1 — Template-code issues to fix (small, do alongside P0)
 
-- [ ] **CORS is hardcoded** to `http://localhost:4200` in `apps/api/src/main.ts`. Drive from env (`CORS_ORIGIN`), default to localhost in dev.
-- [ ] **`.gitignore` does not ignore `.env*`.** Add `.env*` with `!.env.example` / `!.env.production.example` exceptions so secrets can't be committed. (Ecclesio leaked a plaintext token to disk this way — avoid it here.)
-- [ ] **Prod env-file naming mismatch:** `main.ts` `NODE_ENV_FILE_RECORD` maps `production → .env`, but the deploy convention is `.env.production`. Pick one and align the deploy script + main.ts.
-- [ ] **Redundant migrations asset copy:** `apps/api/project.json` build copies `src/database/migrations` → `dist/apps/api/migrations`, but the migrator uses the static import-map, not files. Remove the asset (or delete the import-map and use a file provider — but keep import-map, drop the asset).
-- [ ] **No global `ValidationPipe`.** DTOs exist but aren't validated. Add `app.useGlobalValidationPipe(new ValidationPipe({ whitelist: true, transform: true }))` and `class-validator`/`class-transformer` deps.
-- [ ] **No request-logging middleware.** Ecclesio has `LoggerMiddleware`; port a minimal one (or use pino).
+- [x] **CORS is hardcoded** — now driven by `CORS_ORIGIN` (comma-separated), defaults to `http://localhost:4200`.
+- [x] **`.gitignore` does not ignore `.env*`** — fixed (also `.dockerignore`).
+- [x] **Prod env-file naming mismatch** — `production → .env.production` everywhere; in containers no env file exists and dotenv no-ops (env comes from compose).
+- [x] **Redundant migrations asset copy** — removed (was a no-op anyway: `nx:run-commands` has no `assets` option).
+- [x] **Global `ValidationPipe`** — added (`whitelist` + `transform`). Shared DTOs stay plain interfaces (contract, no class-validator in the FE bundle); the API implements them as decorated classes in `apps/api/src/app/example/dto/` — copy that pattern per feature. Also fixed: `example.service.create()` dropped the `type` field; exception filter now surfaces `getResponse().message` so validation field errors reach the client.
+- [x] **Request-logging middleware** — minimal `LoggerMiddleware` (method, url, status, duration).
+
+**Also fixed (found during verification):** `apps/frontend/project.json` `fileReplacements` pointed at `src/environments/` instead of `src/app/environments/` — every production/e2e FE build was broken.
 
 ---
 
@@ -54,7 +58,7 @@ The template today can only run a dev DB. None of the production containerizatio
 These make the base worth branching from. Ship the wiring + a tiny example, not a full framework.
 
 - [ ] **Env config validation** — `@nestjs/config` with a Joi/zod schema that fails fast if DB vars are missing. One place to see every required env var.
-- [ ] **Health endpoint** — `@nestjs/terminus` `GET /api/health` with a DB ping; wire into compose healthchecks for `api` + `frontend`.
+- [x] **Health endpoint** — done without terminus: existing `GET /api/health` now pings the DB (`select 1` via Kysely, 503 on failure) and is wired into the compose healthchecks for `api` + `frontend`. Swap to `@nestjs/terminus` only if a project needs multi-indicator checks.
 - [ ] **OpenAPI/Swagger** — `@nestjs/swagger` at `/api/docs`, gated to non-prod. Biggest single DX win for future features + FE contract.
 - [ ] **CI** — `.github/workflows/ci.yml`: `nx affected -t lint test build` on PR (with `nx-set-shas`). Optional second workflow: build + push `api`/`frontend` images to GHCR on tag.
 - [ ] **Pre-commit** — Husky + lint-staged (prettier + eslint on staged files).
