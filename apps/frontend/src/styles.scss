@@ -5,14 +5,21 @@
 // custom components at https://material.angular.dev/guide/theming
 @use '@angular/material' as mat;
 
+// Tailwind v4 (processed by @tailwindcss/postcss via apps/frontend/.postcssrc.json)
+@use 'tailwindcss';
+
 html {
   height: 100%;
-  @include mat.theme((color: (primary: mat.$azure-palette,
+  @include mat.theme(
+    (
+      color: (
+        primary: mat.$azure-palette,
         tertiary: mat.$blue-palette,
       ),
       typography: Roboto,
       density: 0,
-    ));
+    )
+  );
 }
 
 body {
