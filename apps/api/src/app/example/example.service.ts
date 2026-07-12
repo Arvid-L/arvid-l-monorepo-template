@@ -65,13 +65,9 @@ export class ExampleService {
   }
 
   async create(createDto: CreateExampleDto): Promise<Example> {
-    const newExample: Insertable<ExampleTable> = {
-      name: createDto.name,
-    };
-
     const example = await this.db
       .insertInto('examples')
-      .values(newExample)
+      .values(this.dtoToInsertable(createDto))
       .returningAll()
       .executeTakeFirstOrThrow();
 

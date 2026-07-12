@@ -12,14 +12,7 @@
         "args": [
           "--node-env=production"
         ],
-        "cwd": "apps/api",
-        "assets": [
-          {
-            "glob": "**/*",
-            "input": "apps/api/src/database/migrations",
-            "output": "migrations"
-          }
-        ]
+        "cwd": "apps/api"
       },
       "configurations": {
         "development": {
@@ -33,40 +26,6 @@
           ]
         }
       }
-    },
-    "prune-lockfile": {
-      "dependsOn": [
-        "build"
-      ],
-      "cache": true,
-      "executor": "@nx/js:prune-lockfile",
-      "outputs": [
-        "{workspaceRoot}/dist/apps/api/package.json",
-        "{workspaceRoot}/dist/apps/api/package-lock.json"
-      ],
-      "options": {
-        "buildTarget": "build"
-      }
-    },
-    "copy-workspace-modules": {
-      "dependsOn": [
-        "build"
-      ],
-      "cache": true,
-      "outputs": [
-        "{workspaceRoot}/dist/apps/api/workspace_modules"
-      ],
-      "executor": "@nx/js:copy-workspace-modules",
-      "options": {
-        "buildTarget": "build"
-      }
-    },
-    "prune": {
-      "dependsOn": [
-        "prune-lockfile",
-        "copy-workspace-modules"
-      ],
-      "executor": "nx:noop"
     },
     "serve": {
       "continuous": true,

@@ -1,8 +1,5 @@
-import {
-  CreateExampleDto,
-  Example,
-  UpdateExampleDto,
-} from '@arvid-l-monorepo-template/shared';
+import { Example } from '@arvid-l-monorepo-template/shared';
+import { CreateExampleDto, UpdateExampleDto } from './dto';
 import {
   Body,
   Controller,
