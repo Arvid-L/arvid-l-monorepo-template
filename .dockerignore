@@ -26,10 +26,8 @@ Thumbs.db
 .git
 .gitignore
 
-# Environment files
-.env
-.env.local
-.env.*.local
+# Environment files (env is injected via compose, never baked into images)
+.env*
 
 # Test coverage
 coverage
