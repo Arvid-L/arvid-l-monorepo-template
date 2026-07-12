@@ -1,5 +1,7 @@
 import { Logger, ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
+import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import helmet from 'helmet';
 import { AppModule } from './app/app.module';
 import { HttpExceptionFilter } from './common/filters/http-exception.filter';
 import { runMigrations } from './database/migrator';
@@ -27,7 +29,15 @@ async function bootstrap() {
 
   await runMigrations();
 
+  const isProduction = process.env.NODE_ENV === 'production';
+
   app.useLogger(logger);
+  app.use(
+    helmet({
+      // CSP would break the Swagger UI, which only exists outside production
+      contentSecurityPolicy: isProduction ? undefined : false,
+    }),
+  );
   app.setGlobalPrefix(globalPrefix);
   app.useGlobalFilters(new HttpExceptionFilter());
   app.useGlobalPipes(
@@ -45,6 +55,18 @@ async function bootstrap() {
     origin: corsOrigins?.length ? corsOrigins : 'http://localhost:4200',
     credentials: true,
   });
+
+  if (!isProduction) {
+    const swaggerConfig = new DocumentBuilder()
+      .setTitle('API')
+      .setVersion('1.0')
+      .build();
+    SwaggerModule.setup(
+      `${globalPrefix}/docs`,
+      app,
+      SwaggerModule.createDocument(app, swaggerConfig),
+    );
+  }
 
   const port = process.env.PORT || 3000;
   await app.listen(port);
