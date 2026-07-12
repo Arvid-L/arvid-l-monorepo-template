@@ -7,8 +7,8 @@ export class AppController {
   constructor(private readonly appService: AppService) {}
 
   @Get('/health')
-  healthCheck(): ApiResponse<{ message: string }> {
-    const result = this.appService.healthCheck();
+  async healthCheck(): Promise<ApiResponse<{ message: string }>> {
+    const result = await this.appService.healthCheck();
     return createResponse(true, 'API is running', result);
   }
 }
