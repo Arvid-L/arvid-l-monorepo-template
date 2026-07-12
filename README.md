@@ -40,4 +40,23 @@ npm run lint
 npm run build
 ```
 
+## Local development
+
+`docker compose up -d` starts the dev DB (5432) and e2e test DB (5433) with
+the committed non-secret defaults from `.env.dev` / `.env.e2e`.
+
+## Production deploy
+
+The production stack (`docker-compose.prod.yml`) runs postgres + api +
+frontend behind an nginx edge proxy with Let's Encrypt TLS.
+
+- **Server setup + first deploy:** see [docs/HETZNER-SETUP.md](docs/HETZNER-SETUP.md)
+- **Every deploy after that:** `./scripts/deploy-remote.sh`
+- **Local smoke test:**
+  `cp .env.production.example .env.production && docker compose -f docker-compose.prod.yml --env-file .env.production up -d --build`
+  → frontend on <http://localhost>, API on <http://localhost/api/health>
+
+Migrations run automatically on API boot. Secrets live only in
+`.env.production` (gitignored, scp'd to the server by the deploy script).
+
 
