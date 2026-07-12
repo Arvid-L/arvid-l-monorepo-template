@@ -6,14 +6,24 @@ import {
   HttpStatus,
 } from '@nestjs/common';
 import { Response } from 'express';
+import { ErrorCode } from '@arvid-l-monorepo-template/shared';
 
 export interface ErrorResponse {
   statusCode: number;
   message: string | string[];
   error: string;
+  errorCode: ErrorCode;
   timestamp: string;
   path: string;
 }
+
+const ERROR_CODE_BY_STATUS: Partial<Record<number, ErrorCode>> = {
+  [HttpStatus.BAD_REQUEST]: ErrorCode.VALIDATION_ERROR,
+  [HttpStatus.UNAUTHORIZED]: ErrorCode.UNAUTHORIZED,
+  [HttpStatus.FORBIDDEN]: ErrorCode.FORBIDDEN,
+  [HttpStatus.NOT_FOUND]: ErrorCode.NOT_FOUND,
+  [HttpStatus.CONFLICT]: ErrorCode.CONFLICT,
+};
 
 @Catch()
 export class HttpExceptionFilter implements ExceptionFilter {
@@ -39,8 +49,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
         exceptionResponse !== null &&
         'message' in exceptionResponse
       ) {
-        message = (exceptionResponse as { message: string | string[] })
-          .message;
+        message = (exceptionResponse as { message: string | string[] }).message;
       } else {
         message = exception.message;
       }
@@ -50,6 +59,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
       statusCode: status,
       message,
       error: HttpStatus[status],
+      errorCode: ERROR_CODE_BY_STATUS[status] ?? ErrorCode.INTERNAL_ERROR,
       timestamp: new Date().toISOString(),
       path: request.url,
     };
