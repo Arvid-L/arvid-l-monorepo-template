@@ -1,0 +1,120 @@
+# Production stack: postgres + api + frontend + edge nginx (+ certbot).
+#
+# Always run with an explicit env file:
+#   docker compose -f docker-compose.prod.yml --env-file .env.production up -d --build
+#
+# Local smoke test: cp .env.production.example .env.production and run the
+# command above — the stack comes up HTTP-only on http://localhost.
+# TLS on a real server: scripts/init-tls.sh (issues certs, switches
+# NGINX_TEMPLATES to templates-tls, enables the certbot renewal service).
+
+name: ${PROJECT_NAME:-arvid-l-monorepo-template}-${ENV_NAME:-prod}
+
+services:
+  postgres:
+    # Needs PostGIS? Swap the image to postgis/postgis:16-3.4-alpine — nothing else changes.
+    image: postgres:16-alpine
+    container_name: ${PROJECT_NAME:-arvid-l-monorepo-template}-db-${ENV_NAME:-prod}
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${DATABASE_NAME:?DATABASE_NAME is required}
+      POSTGRES_USER: ${DATABASE_USER:?DATABASE_USER is required}
+      POSTGRES_PASSWORD: ${DATABASE_PASSWORD:?DATABASE_PASSWORD is required}
+    ports:
+      # Never expose the DB publicly — loopback only (SSH tunnel for admin access).
+      - '127.0.0.1:5432:5432'
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U ${DATABASE_USER} -d ${DATABASE_NAME}']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - app-network
+
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+      target: production
+    container_name: ${PROJECT_NAME:-arvid-l-monorepo-template}-api-${ENV_NAME:-prod}
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      DATABASE_HOST: postgres
+      DATABASE_PORT: 5432
+      DATABASE_NAME: ${DATABASE_NAME}
+      DATABASE_USER: ${DATABASE_USER}
+      DATABASE_PASSWORD: ${DATABASE_PASSWORD}
+      CORS_ORIGIN: ${CORS_ORIGIN:-}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ['CMD', 'wget', '-qO-', 'http://localhost:3000/api/health']
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+    networks:
+      - app-network
+
+  frontend:
+    build:
+      context: .
+      dockerfile: apps/frontend/Dockerfile
+      target: production
+    container_name: ${PROJECT_NAME:-arvid-l-monorepo-template}-frontend-${ENV_NAME:-prod}
+    restart: unless-stopped
+    healthcheck:
+      test: ['CMD', 'wget', '-qO-', 'http://localhost:80/']
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    networks:
+      - app-network
+
+  nginx:
+    image: nginx:alpine
+    container_name: ${PROJECT_NAME:-arvid-l-monorepo-template}-nginx-${ENV_NAME:-prod}
+    restart: unless-stopped
+    ports:
+      - '80:80'
+      - '443:443'
+    environment:
+      DOMAIN: ${DOMAIN:-localhost}
+    volumes:
+      - ./infrastructure/nginx/${NGINX_TEMPLATES:-templates-http}:/etc/nginx/templates:ro
+      - letsencrypt:/etc/letsencrypt:ro
+      - certbot_webroot:/var/www/certbot:ro
+    # Reload loop picks up renewed certificates; /docker-entrypoint.sh keeps
+    # the image's envsubst template rendering (it only runs when $1 == nginx).
+    command: ['/bin/sh', '-c', "while :; do sleep 6h & wait $${!}; nginx -s reload; done & exec /docker-entrypoint.sh nginx -g 'daemon off;'"]
+    depends_on:
+      - frontend
+      - api
+    networks:
+      - app-network
+
+  # Renews certificates every 12h; only active with COMPOSE_PROFILES=tls
+  # (set by scripts/init-tls.sh on the server, off for local testing).
+  certbot:
+    image: certbot/certbot
+    container_name: ${PROJECT_NAME:-arvid-l-monorepo-template}-certbot-${ENV_NAME:-prod}
+    profiles:
+      - tls
+    restart: unless-stopped
+    volumes:
+      - letsencrypt:/etc/letsencrypt
+      - certbot_webroot:/var/www/certbot
+    entrypoint: ['/bin/sh', '-c', 'trap exit TERM; while :; do certbot renew --webroot -w /var/www/certbot; sleep 12h & wait $${!}; done']
+
+volumes:
+  postgres_data:
+  letsencrypt:
+  certbot_webroot:
+
+networks:
+  app-network:
+    driver: bridge
