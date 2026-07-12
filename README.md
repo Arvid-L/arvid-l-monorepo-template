@@ -1,6 +1,18 @@
 # ArvidLMonorepoTemplate
 
-Monorepo Base Structure for my future projects. 
+Monorepo Base Structure for my future projects.
+
+## Start a new project
+
+```bash
+git clone <this-repo> my-project && cd my-project
+npm ci
+npm run init-project -- my-project --reset-git
+```
+
+Then follow [docs/NEW-PROJECT.md](docs/NEW-PROJECT.md) — the complete path
+from branch-off to the app running on your domain with HTTPS.
+
 
 ## Stack
 

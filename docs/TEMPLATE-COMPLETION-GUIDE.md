@@ -74,13 +74,9 @@ These make the base worth branching from. Ship the wiring + a tiny example, not 
 
 For "branch off and go fast," the biggest friction is renaming everything. Add:
 
-- [ ] **`tools/scripts/init-project.ts`** — takes a new project name/scope and rewrites, across the repo:
-  - npm scope `@arvid-l-monorepo-template` → `@<project>` (package.json, `tsconfig.base.json` paths, all imports)
-  - `libs/shared` project name, container names, DB names in compose + `.env.*`
-  - `PROJECT_NAME` in deploy scripts, README title
-  - resets git history (optional flag) / updates `README.md`
+- [x] **`tools/scripts/init-project.ts`** — `npm run init-project -- <name> [--reset-git]`: rewrites kebab/Pascal/Title forms of the template name across every text file (npm scope + imports, tsconfig paths, container/DB/volume names, deploy defaults, titles incl. package-lock), optional fresh git history. Documented in README + `docs/NEW-PROJECT.md` (full branch-off → live-HTTPS walkthrough).
 
-  Document it in the README as **step 1** of starting a new project. This is what turns the template into a true "branch and deploy" base.
+  **Verified 2026-07-12:** ran in a clean clone (`somenewproject --reset-git`) — zero leftover occurrences, `nx run-many -t lint test build` green in the renamed repo, no `npm ci` re-run needed. Also fixed: `tsx` was never a devDep although `create-migration` requires it.
 
 ---
 

@@ -104,12 +104,11 @@ if (resetGit) {
 
 console.log('');
 console.log('Next steps:');
-console.log('  1. npm ci                          # relink the renamed workspace');
-console.log('  2. npm run quality                 # lint + test + build must be green');
-console.log('  3. Rewrite README.md intro + review CLAUDE.md for your project');
+console.log('  1. npm run quality                 # lint + test + build must be green');
+console.log('  2. Rewrite README.md intro + review CLAUDE.md for your project');
 console.log('     (docs/TEMPLATE-COMPLETION-GUIDE.md is template-internal — delete it)');
 if (resetGit) {
-  console.log('  4. git remote add origin <your-repo-url> && git push -u origin main');
+  console.log('  3. git remote add origin <your-repo-url> && git push -u origin main');
 }
 console.log('');
 console.log(
