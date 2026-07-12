@@ -30,8 +30,8 @@
         "production": {
           "fileReplacements": [
             {
-              "replace": "apps/frontend/src/environments/environment.ts",
-              "with": "apps/frontend/src/environments/environment.prod.ts"
+              "replace": "apps/frontend/src/app/environments/environment.ts",
+              "with": "apps/frontend/src/app/environments/environment.prod.ts"
             }
           ],
           "budgets": [
@@ -56,8 +56,8 @@
         "e2e": {
           "fileReplacements": [
             {
-              "replace": "apps/frontend/src/environments/environment.ts",
-              "with": "apps/frontend/src/environments/environment.e2e.ts"
+              "replace": "apps/frontend/src/app/environments/environment.ts",
+              "with": "apps/frontend/src/app/environments/environment.e2e.ts"
             }
           ]
         }
