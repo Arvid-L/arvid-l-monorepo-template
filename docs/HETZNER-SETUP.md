@@ -83,6 +83,15 @@ docker compose -f docker-compose.prod.yml --env-file .env.production ps   # on t
 docker compose -f docker-compose.prod.yml --env-file .env.production logs -f api
 ```
 
+## Known friction (seen on real deploys)
+
+- **apt lock on fresh boxes:** unattended-upgrades often holds the apt lock
+  right after boot — `get.docker.com` then fails with `Could not get lock`.
+  Wait for it: `while fuser /var/lib/dpkg/lock-frontend >/dev/null 2>&1; do sleep 5; done`
+- **Box previously served a site:** stop the host nginx and its certbot timer
+  first, or ports 80/443 are taken:
+  `systemctl disable --now nginx certbot.timer`
+
 ## Variations
 
 - **PostGIS**: swap the postgres image in `docker-compose.prod.yml` (and

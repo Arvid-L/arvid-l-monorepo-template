@@ -100,6 +100,8 @@ For "branch off and go fast," the biggest friction is renaming everything. Add:
 
 **Definition of done for "template is finished":** from a clean checkout you can run `init-project`, provision a Hetzner box, run the deploy script, and reach a live HTTPS site with the example feature working and migrations applied — with lint/test/build green in CI.
 
+> **PROVEN on a real deploy 2026-07-12:** `arvid-linde-web` branched off, deployed to a Hetzner CX23 → https://arvidlin.de live with LE cert, HTTP→HTTPS redirect, IPv4+IPv6, example CRUD + migrations working. Two bugs found and fixed during the run (compose env-precedence in init-tls.sh; apt-lock/host-nginx friction documented in HETZNER-SETUP.md). Still open: CI (no green-in-CI yet), P1 baseline features.
+
 ---
 
 ## Notes for the eventual Ecclesio migration (keep these cheap)
