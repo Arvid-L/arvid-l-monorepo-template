@@ -15,10 +15,11 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatCardModule } from '@angular/material/card';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
-import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
+import { MatSnackBarModule } from '@angular/material/snack-bar';
 import { Example, ExampleType } from '@arvid-l-monorepo-template/shared';
 import { ExampleEditDialogComponent } from './example-edit-dialog/example-edit-dialog.component';
 import { ExampleApiService } from '../../core/api/example.api.service';
+import { ToastService } from '../../core/services/toast.service';
 
 @Component({
   selector: 'app-example',
@@ -44,7 +45,7 @@ export class ExampleComponent {
   private fb = inject(FormBuilder);
   private exampleApiService = inject(ExampleApiService);
   private dialog = inject(MatDialog);
-  private snackBar = inject(MatSnackBar);
+  private toast = inject(ToastService);
 
   examples = signal<Example[]>([]);
   displayedColumns = ['name', 'type', 'createdAt', 'actions'];
@@ -64,11 +65,8 @@ export class ExampleComponent {
       next: (examples) => {
         this.examples.set(examples);
       },
-      error: () => {
-        this.snackBar.open('Failed to load examples', 'Close', {
-          duration: 3000,
-        });
-      },
+      // errors surface via the global httpErrorInterceptor toast
+      error: () => undefined,
     });
   }
 
@@ -76,17 +74,12 @@ export class ExampleComponent {
     if (this.form.valid) {
       this.exampleApiService.create(this.form.value).subscribe({
         next: () => {
-          this.snackBar.open('Example created successfully', 'Close', {
-            duration: 3000,
-          });
+          this.toast.success('Example created successfully');
           this.form.reset();
           this.loadExamples();
         },
-        error: () => {
-          this.snackBar.open('Failed to create example', 'Close', {
-            duration: 3000,
-          });
-        },
+        // errors surface via the global httpErrorInterceptor toast
+        error: () => undefined,
       });
     }
   }
@@ -108,16 +101,11 @@ export class ExampleComponent {
     if (confirm('Are you sure you want to delete this example?')) {
       this.exampleApiService.delete(id).subscribe({
         next: () => {
-          this.snackBar.open('Example deleted successfully', 'Close', {
-            duration: 3000,
-          });
+          this.toast.success('Example deleted successfully');
           this.loadExamples();
         },
-        error: () => {
-          this.snackBar.open('Failed to delete example', 'Close', {
-            duration: 3000,
-          });
-        },
+        // errors surface via the global httpErrorInterceptor toast
+        error: () => undefined,
       });
     }
   }

@@ -14,9 +14,9 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatInputModule } from '@angular/material/input';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatSelectModule } from '@angular/material/select';
-import { MatSnackBar } from '@angular/material/snack-bar';
 import { Example, ExampleType } from '@arvid-l-monorepo-template/shared';
 import { ExampleApiService } from '../../../core/api/example.api.service';
+import { ToastService } from '../../../core/services/toast.service';
 
 @Component({
   selector: 'app-example-edit-dialog',
@@ -35,7 +35,7 @@ import { ExampleApiService } from '../../../core/api/example.api.service';
 export class ExampleEditDialogComponent {
   private fb = inject(FormBuilder);
   private exampleApiService = inject(ExampleApiService);
-  private snackBar = inject(MatSnackBar);
+  private toast = inject(ToastService);
   private dialogRef = inject(MatDialogRef<ExampleEditDialogComponent>);
 
   public data = inject<Example>(MAT_DIALOG_DATA);
@@ -55,16 +55,11 @@ export class ExampleEditDialogComponent {
     if (this.form.valid) {
       this.exampleApiService.update(this.data.id, this.form.value).subscribe({
         next: () => {
-          this.snackBar.open('Example updated successfully', 'Close', {
-            duration: 3000,
-          });
+          this.toast.success('Example updated successfully');
           this.dialogRef.close(true);
         },
-        error: () => {
-          this.snackBar.open('Failed to update example', 'Close', {
-            duration: 3000,
-          });
-        },
+        // errors surface via the global httpErrorInterceptor toast
+        error: () => undefined,
       });
     }
   }
