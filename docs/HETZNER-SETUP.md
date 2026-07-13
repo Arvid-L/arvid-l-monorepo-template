@@ -75,6 +75,29 @@ service. No further TLS maintenance needed.
 ./scripts/deploy-remote.sh
 ```
 
+## 7. Nightly DB backups (one-time, on the server)
+
+```bash
+ssh root@<server>
+crontab -e
+# add:
+30 3 * * * /opt/my-project/scripts/backup-db.sh >> /var/log/db-backup.log 2>&1
+```
+
+Dumps land in `/var/backups/<project>` (14 days retention; both configurable
+via `BACKUP_DIR` / `BACKUP_KEEP_DAYS` in `.env.production`). For off-site
+copies set `BACKUP_REMOTE` to any rsync/scp target — e.g. a
+[Hetzner Storage Box](https://www.hetzner.com/storage/storage-box/) — and
+every dump is pushed there too.
+
+Restore (destructive, asks for confirmation, stops the API during restore):
+
+```bash
+./scripts/restore-db.sh /var/backups/<project>/<db>_<timestamp>.sql.gz
+```
+
+Verified round-trip: backup → `DELETE FROM users` → restore → login works.
+
 ## Sanity checks
 
 ```bash

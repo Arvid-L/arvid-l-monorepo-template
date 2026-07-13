@@ -46,11 +46,14 @@ export async function runMigrations() {
     }
   });
 
+  await db.destroy();
+
   if (error) {
-    logger.error('Migration failed:', error);
-    process.exit(1);
+    // Throw instead of process.exit(1): pino writes asynchronously, an
+    // immediate exit swallows the error output and the container dies
+    // silently. The rejection from bootstrap() prints synchronously.
+    throw new Error(`Migration failed: ${error}`, { cause: error });
   }
 
-  await db.destroy();
   logger.log('All migrations completed');
 }
