@@ -23,7 +23,7 @@ jobs:
         env:
           CYPRESS_INSTALL_BINARY: '0'
 
-      - uses: nrwl/nx-set-shas@v4
+      - uses: nrwl/nx-set-shas@v5
 
       # PRs: only affected projects. Pushes to main: everything — cheap at
       # this size and a fresh repo has no base commit for affected to diff.
