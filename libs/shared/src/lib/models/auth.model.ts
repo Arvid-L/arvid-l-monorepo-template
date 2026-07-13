@@ -8,7 +8,12 @@ export interface LoginDto {
   password: string;
 }
 
+export interface RefreshDto {
+  refreshToken: string;
+}
+
 export interface LoginResponse {
   accessToken: string;
+  refreshToken: string;
   user: AuthUser;
 }

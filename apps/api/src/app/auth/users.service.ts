@@ -16,4 +16,13 @@ export class UsersService {
       .where('deleted_at', 'is', null)
       .executeTakeFirst();
   }
+
+  async findById(id: string): Promise<Selectable<UserTable> | undefined> {
+    return this.db
+      .selectFrom('users')
+      .selectAll()
+      .where('id', '=', id)
+      .where('deleted_at', 'is', null)
+      .executeTakeFirst();
+  }
 }

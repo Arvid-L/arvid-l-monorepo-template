@@ -2,6 +2,7 @@
 import './config/load-env';
 import { Logger, ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
+import { NestExpressApplication } from '@nestjs/platform-express';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import helmet from 'helmet';
 import { AppModule } from './app/app.module';
@@ -9,9 +10,13 @@ import { HttpExceptionFilter } from './common/filters/http-exception.filter';
 import { runMigrations } from './database/migrator';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create<NestExpressApplication>(AppModule);
   const globalPrefix = 'api';
   const logger = app.get(Logger);
+
+  // Behind the edge nginx: derive client IPs from X-Forwarded-For so
+  // rate limiting applies per client, not per proxy.
+  app.set('trust proxy', 1);
 
   await runMigrations();
 

@@ -12,8 +12,11 @@ export const appConfig: ApplicationConfig = {
   providers: [
     provideBrowserGlobalErrorListeners(),
     provideRouter(appRoutes),
+    // Order matters: on response errors the chain unwinds inside-out, so
+    // authInterceptor (last) retries 401s with a refreshed token before
+    // httpErrorInterceptor (first) would toast them.
     provideHttpClient(
-      withInterceptors([authInterceptor, httpErrorInterceptor]),
+      withInterceptors([httpErrorInterceptor, authInterceptor]),
     ),
   ],
 };

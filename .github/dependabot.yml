@@ -1,0 +1,21 @@
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      # One PR per group instead of dozens of single-dependency PRs
+      angular:
+        patterns: ['@angular/*', 'angular-eslint', '@schematics/angular']
+      nestjs:
+        patterns: ['@nestjs/*']
+      nx:
+        patterns: ['@nx/*', 'nx']
+      minor-and-patch:
+        update-types: ['minor', 'patch']
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly

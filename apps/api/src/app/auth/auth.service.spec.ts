@@ -3,57 +3,124 @@ import { JwtModule } from '@nestjs/jwt';
 import { UnauthorizedException } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { UsersService } from './users.service';
+import { RefreshTokensService } from './refresh-tokens.service';
 import { hashPassword } from './password.util';
 
 describe('AuthService', () => {
   let service: AuthService;
   const findByEmail = jest.fn();
+  const findById = jest.fn();
+  const issue = jest.fn();
+  const findValid = jest.fn();
+  const revoke = jest.fn();
+
+  const storedUser = {
+    id: 'user-1',
+    email: 'admin@example.org',
+    password_hash: hashPassword('secret-password'),
+  };
 
   beforeAll(async () => {
     const module = await Test.createTestingModule({
       imports: [JwtModule.register({ secret: 'test-secret-not-production' })],
       providers: [
         AuthService,
-        { provide: UsersService, useValue: { findByEmail } },
+        { provide: UsersService, useValue: { findByEmail, findById } },
+        {
+          provide: RefreshTokensService,
+          useValue: { issue, findValid, revoke },
+        },
       ],
     }).compile();
 
     service = module.get(AuthService);
   });
 
-  beforeEach(() => findByEmail.mockReset());
-
-  it('returns a token and the user for valid credentials', async () => {
-    findByEmail.mockResolvedValue({
-      id: 'user-1',
-      email: 'admin@example.org',
-      password_hash: hashPassword('secret-password'),
-    });
-
-    const result = await service.login('admin@example.org', 'secret-password');
-
-    expect(result.accessToken).toEqual(expect.any(String));
-    expect(result.accessToken.split('.')).toHaveLength(3);
-    expect(result.user).toEqual({ id: 'user-1', email: 'admin@example.org' });
+  beforeEach(() => {
+    jest.resetAllMocks();
+    issue.mockResolvedValue({ token: 'new-refresh-token' });
   });
 
-  it('rejects a wrong password', async () => {
-    findByEmail.mockResolvedValue({
-      id: 'user-1',
-      email: 'admin@example.org',
-      password_hash: hashPassword('secret-password'),
+  describe('login', () => {
+    it('returns a token pair and the user for valid credentials', async () => {
+      findByEmail.mockResolvedValue(storedUser);
+
+      const result = await service.login(
+        'admin@example.org',
+        'secret-password',
+      );
+
+      expect(result.accessToken.split('.')).toHaveLength(3);
+      expect(result.refreshToken).toBe('new-refresh-token');
+      expect(result.user).toEqual({ id: 'user-1', email: 'admin@example.org' });
     });
 
-    await expect(
-      service.login('admin@example.org', 'wrong'),
-    ).rejects.toBeInstanceOf(UnauthorizedException);
+    it('rejects a wrong password', async () => {
+      findByEmail.mockResolvedValue(storedUser);
+
+      await expect(
+        service.login('admin@example.org', 'wrong'),
+      ).rejects.toBeInstanceOf(UnauthorizedException);
+      expect(issue).not.toHaveBeenCalled();
+    });
+
+    it('rejects an unknown user', async () => {
+      findByEmail.mockResolvedValue(undefined);
+
+      await expect(
+        service.login('nobody@example.org', 'whatever'),
+      ).rejects.toBeInstanceOf(UnauthorizedException);
+    });
   });
 
-  it('rejects an unknown user', async () => {
-    findByEmail.mockResolvedValue(undefined);
+  describe('refresh', () => {
+    it('rotates the token: revokes the used one and issues a new pair', async () => {
+      findValid.mockResolvedValue({ id: 'rt-1', user_id: 'user-1' });
+      findById.mockResolvedValue(storedUser);
 
-    await expect(
-      service.login('nobody@example.org', 'whatever'),
-    ).rejects.toBeInstanceOf(UnauthorizedException);
+      const result = await service.refresh('old-refresh-token');
+
+      expect(revoke).toHaveBeenCalledWith('rt-1');
+      expect(issue).toHaveBeenCalledWith('user-1');
+      expect(result.refreshToken).toBe('new-refresh-token');
+      expect(result.accessToken.split('.')).toHaveLength(3);
+    });
+
+    it('rejects an invalid, expired or revoked token', async () => {
+      findValid.mockResolvedValue(undefined);
+
+      await expect(service.refresh('bad-token')).rejects.toBeInstanceOf(
+        UnauthorizedException,
+      );
+      expect(revoke).not.toHaveBeenCalled();
+    });
+
+    it('rejects when the user behind the token is gone', async () => {
+      findValid.mockResolvedValue({ id: 'rt-1', user_id: 'user-1' });
+      findById.mockResolvedValue(undefined);
+
+      await expect(service.refresh('orphaned')).rejects.toBeInstanceOf(
+        UnauthorizedException,
+      );
+      expect(revoke).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('logout', () => {
+    it('revokes a valid refresh token', async () => {
+      findValid.mockResolvedValue({ id: 'rt-1', user_id: 'user-1' });
+
+      await service.logout('valid-token');
+
+      expect(revoke).toHaveBeenCalledWith('rt-1');
+    });
+
+    it('is a no-op for unknown tokens', async () => {
+      findValid.mockResolvedValue(undefined);
+
+      await service.logout('unknown-token');
+
+      expect(revoke).not.toHaveBeenCalled();
+    });
   });
 });

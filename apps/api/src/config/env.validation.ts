@@ -56,10 +56,16 @@ export class EnvironmentVariables {
   @MinLength(16)
   JWT_SECRET!: string;
 
-  // Anything @nestjs/jwt accepts, e.g. "1d", "12h" (default: 1d)
+  // Anything @nestjs/jwt accepts, e.g. "15m", "12h" (default: 15m)
   @IsOptional()
   @IsString()
   JWT_EXPIRES_IN?: string;
+
+  // Refresh token lifetime in days (default: 30)
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  REFRESH_TOKEN_TTL_DAYS?: number;
 }
 
 export function validateEnv(
