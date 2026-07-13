@@ -4,6 +4,19 @@ updates:
     directory: /
     schedule:
       interval: weekly
+    ignore:
+      # nx and Angular major upgrades must go through `nx migrate`
+      # (workspace migrations), never raw dependency bumps.
+      - dependency-name: 'nx'
+        update-types: ['version-update:semver-major']
+      - dependency-name: '@nx/*'
+        update-types: ['version-update:semver-major']
+      - dependency-name: '@angular/*'
+        update-types: ['version-update:semver-major']
+      - dependency-name: '@schematics/angular'
+        update-types: ['version-update:semver-major']
+      - dependency-name: 'angular-eslint'
+        update-types: ['version-update:semver-major']
     groups:
       # One PR per group instead of dozens of single-dependency PRs
       angular:
