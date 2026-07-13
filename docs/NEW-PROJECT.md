@@ -98,6 +98,26 @@ For working password-reset mails also set the `SMTP_*` vars (any
 transactional provider or mailbox). Without them the flow still works —
 outgoing mail is written to the API log instead of sent.
 
+## 5b. Mail (Hetzner webhosting)
+
+Registration requires a verification mail, so set up SMTP before inviting
+real users (without it, verification links only appear in the API log).
+
+If your domain is registered at Hetzner you already have webhosting mail:
+
+1. **konsoleH** (konsoleh.hetzner.com) → Email → create `noreply@<domain>`
+   for the app. Create human inboxes (`info@<domain>`, ...) the same way —
+   read them via webmail (webmail.your-server.de) or any IMAP client.
+2. Fill the `SMTP_*` block in `.env.production` (see the example file —
+   `SMTP_HOST=mail.your-server.de`, port 587, login = full mailbox address).
+3. DNS: Hetzner's default SPF record (`v=spf1 +a +mx ?all`) already covers
+   their mail servers. Enable DKIM in konsoleH if the option exists for
+   your package.
+4. Verify: `npm run mail:test -- you@somewhere.com` → mail arrives.
+
+Any transactional provider (Brevo, Resend, ...) works identically — swap
+the `SMTP_*` values.
+
 ## 6. First deploy
 
 ```bash
@@ -122,9 +142,12 @@ from then on) and starts the auto-renewal service.
 
 ## 8. Auth is already built in
 
-Users can register and log in at `/register` / `/login`; forgot/reset
-password works end-to-end (see the SMTP note above). Everyone who registers
-gets the `user` role. Create your admin account once, on the server:
+Users can register at `/register`; they receive a verification mail and can
+log in at `/login` once the link is clicked (without SMTP the link lands in
+the API log: `docker compose ... logs api | grep verify-email`).
+Forgot/reset password works the same way. Registration ends in a
+"check your inbox" screen — that mail arriving is your smoke test for §5b.
+Everyone who registers gets the `user` role. Create your admin account once, on the server:
 
 ```bash
 ssh root@somenewproject.com 'cd /opt/somenewproject && \

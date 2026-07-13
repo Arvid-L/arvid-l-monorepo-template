@@ -6,6 +6,8 @@ single `./scripts/deploy-remote.sh` from your machine.
 Assumes: a Hetzner Cloud server (smallest CX instance is fine), a domain, and
 your SSH key added during server creation.
 
+Mail setup (Hetzner webhosting SMTP + inboxes): see NEW-PROJECT.md §5b.
+
 ## 1. DNS
 
 Create an **A record** for your domain pointing at the server's IPv4 address
