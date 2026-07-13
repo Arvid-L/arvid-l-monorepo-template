@@ -27,7 +27,12 @@ if (!email || !password || (role && !VALID_ROLES.includes(role))) {
 
 async function createUser(): Promise<void> {
   const db = new Kysely<{
-    users: { email: string; password_hash: string; role: string };
+    users: {
+      email: string;
+      password_hash: string;
+      role: string;
+      email_verified_at: string;
+    };
   }>({
     dialect: new PostgresDialect({
       pool: new Pool({
@@ -47,10 +52,13 @@ async function createUser(): Promise<void> {
         email,
         password_hash: hashPassword(password),
         role: role ?? 'user',
+        // Bootstrap/admin path must never end up behind the login gate.
+        email_verified_at: new Date().toISOString(),
       })
       .onConflict((oc) =>
         oc.column('email').doUpdateSet({
           password_hash: hashPassword(password),
+          email_verified_at: new Date().toISOString(),
           // Only touch the role of an existing user when explicitly given —
           // a plain password reset must not demote an admin.
           ...(role ? { role } : {}),
