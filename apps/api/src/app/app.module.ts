@@ -1,5 +1,6 @@
 import { Logger, MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { APP_GUARD } from '@nestjs/core';
+import { ScheduleModule } from '@nestjs/schedule';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
@@ -17,6 +18,8 @@ import { validateEnv } from '../config/env.validation';
     // strict @Throttle override (see auth.controller). Requires the
     // 'trust proxy' setting in main.ts to see real IPs behind nginx.
     ThrottlerModule.forRoot([{ ttl: 60_000, limit: 100 }]),
+    // Enables @Cron() jobs (e.g. auth/token-cleanup.service)
+    ScheduleModule.forRoot(),
     AuthModule,
     ExampleModule,
     DatabaseModule,

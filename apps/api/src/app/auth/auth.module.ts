@@ -7,6 +7,7 @@ import { AuthService } from './auth.service';
 import { UsersService } from './users.service';
 import { RefreshTokensService } from './refresh-tokens.service';
 import { PasswordResetTokensService } from './password-reset-tokens.service';
+import { TokenCleanupService } from './token-cleanup.service';
 import { JwtAuthGuard } from './jwt-auth.guard';
 import { RolesGuard } from './roles.guard';
 
@@ -29,6 +30,7 @@ import { RolesGuard } from './roles.guard';
     UsersService,
     RefreshTokensService,
     PasswordResetTokensService,
+    TokenCleanupService,
     JwtAuthGuard,
     RolesGuard,
   ],
