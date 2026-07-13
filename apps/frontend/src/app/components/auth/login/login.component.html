@@ -34,6 +34,19 @@
         </button>
       </form>
 
+      @if (unverifiedEmail()) {
+        <p class="unverified-hint">
+          This account's email address is not verified yet.
+          @if (!resendRequested()) {
+            <button mat-button type="button" (click)="resendVerification()">
+              Resend verification mail
+            </button>
+          } @else {
+            A new mail is on its way — check your inbox.
+          }
+        </p>
+      }
+
       <div class="auth-links">
         <a [routerLink]="['/', ROUTES.FORGOT_PASSWORD]">Forgot password?</a>
         <a [routerLink]="['/', ROUTES.REGISTER]">Create account</a>
