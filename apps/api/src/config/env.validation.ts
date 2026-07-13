@@ -7,6 +7,7 @@ import {
   IsString,
   Max,
   Min,
+  MinLength,
   validateSync,
 } from 'class-validator';
 
@@ -50,6 +51,15 @@ export class EnvironmentVariables {
   @IsOptional()
   @IsString()
   CORS_ORIGIN?: string;
+
+  @IsString()
+  @MinLength(16)
+  JWT_SECRET!: string;
+
+  // Anything @nestjs/jwt accepts, e.g. "1d", "12h" (default: 1d)
+  @IsOptional()
+  @IsString()
+  JWT_EXPIRES_IN?: string;
 }
 
 export function validateEnv(

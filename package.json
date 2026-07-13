@@ -10,6 +10,7 @@
     "serve:all": "nx run-many --target=serve",
     "db:migrate": "nx migrate api",
     "db:seed": "tsx tools/scripts/seed.ts",
+    "user:create": "tsx tools/scripts/create-user.ts",
     "init-project": "tsx tools/scripts/init-project.ts",
     "prepare": "husky"
   },
@@ -32,6 +33,7 @@
     "@nestjs/common": "^11.0.0",
     "@nestjs/config": "^4.0.2",
     "@nestjs/core": "^11.0.0",
+    "@nestjs/jwt": "^11.0.2",
     "@nestjs/platform-express": "^11.0.0",
     "@nestjs/swagger": "^11.4.5",
     "axios": "^1.6.0",

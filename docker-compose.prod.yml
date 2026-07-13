@@ -48,6 +48,7 @@ services:
       DATABASE_USER: ${DATABASE_USER}
       DATABASE_PASSWORD: ${DATABASE_PASSWORD}
       CORS_ORIGIN: ${CORS_ORIGIN:-}
+      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET is required}
     depends_on:
       postgres:
         condition: service_healthy
@@ -91,7 +92,12 @@ services:
       - certbot_webroot:/var/www/certbot:ro
     # Reload loop picks up renewed certificates; /docker-entrypoint.sh keeps
     # the image's envsubst template rendering (it only runs when $1 == nginx).
-    command: ['/bin/sh', '-c', "while :; do sleep 6h & wait $${!}; nginx -s reload; done & exec /docker-entrypoint.sh nginx -g 'daemon off;'"]
+    command:
+      [
+        '/bin/sh',
+        '-c',
+        "while :; do sleep 6h & wait $${!}; nginx -s reload; done & exec /docker-entrypoint.sh nginx -g 'daemon off;'",
+      ]
     depends_on:
       - frontend
       - api
@@ -109,7 +115,12 @@ services:
     volumes:
       - letsencrypt:/etc/letsencrypt
       - certbot_webroot:/var/www/certbot
-    entrypoint: ['/bin/sh', '-c', 'trap exit TERM; while :; do certbot renew --webroot -w /var/www/certbot; sleep 12h & wait $${!}; done']
+    entrypoint:
+      [
+        '/bin/sh',
+        '-c',
+        'trap exit TERM; while :; do certbot renew --webroot -w /var/www/certbot; sleep 12h & wait $${!}; done',
+      ]
 
 volumes:
   postgres_data:
