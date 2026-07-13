@@ -1,6 +1,6 @@
 # Monorepo Template — Completion Guide
 
-> **Audience:** a Claude Code agent (or Arvid) working *inside* `~/dev/arvid-l-monorepo-template`.
+> **Audience:** a Claude Code agent (or Arvid) working _inside_ `~/dev/arvid-l-monorepo-template`.
 > **Goal:** finish this nx template so a new project can be created by **branching → renaming → deploying to a fresh Hetzner box** in under an hour, with a solid full-stack baseline already in place.
 > **Downstream consumer:** the [Ecclesio](https://github.com/Arvid-L/ecclesio) project will be re-based onto a branch of this template, so decisions here should keep that migration cheap (NestJS module/service/controller + Kysely + DTOs; Angular signals/standalone; shared lib). See the migration notes at the bottom.
 
@@ -18,6 +18,7 @@
 - `tools/scripts/create-migration.ts`, bruno collection, eslint/prettier, README.
 
 **Build outputs (needed for Dockerfiles):**
+
 - API: `nx build api` → webpack → `dist/apps/api/` (entry `main.js`). Targets `prune-lockfile` + `copy-workspace-modules` already emit `dist/apps/api/package.json` + `workspace_modules` — **use these in the API Dockerfile** for a slim runtime image.
 - Frontend: `nx build frontend` → `dist/apps/frontend/browser/` (Angular `@angular/build:application`).
 
@@ -57,16 +58,16 @@ The template today can only run a dev DB. None of the production containerizatio
 
 These make the base worth branching from. Ship the wiring + a tiny example, not a full framework.
 
-- [ ] **Env config validation** — `@nestjs/config` with a Joi/zod schema that fails fast if DB vars are missing. One place to see every required env var.
+- [x] **Env config validation** — `apps/api/src/config/env.validation.ts` (class-validator, consistent with the DTO stack — no Joi/zod dep). Gotcha: validation runs at AppModule decorator evaluation, so the dotenv load lives in `config/load-env.ts` imported FIRST in main.ts.
 - [x] **Health endpoint** — done without terminus: existing `GET /api/health` now pings the DB (`select 1` via Kysely, 503 on failure) and is wired into the compose healthchecks for `api` + `frontend`. Swap to `@nestjs/terminus` only if a project needs multi-indicator checks.
-- [ ] **OpenAPI/Swagger** — `@nestjs/swagger` at `/api/docs`, gated to non-prod. Biggest single DX win for future features + FE contract.
-- [ ] **CI** — `.github/workflows/ci.yml`: `nx affected -t lint test build` on PR (with `nx-set-shas`). Optional second workflow: build + push `api`/`frontend` images to GHCR on tag.
-- [ ] **Pre-commit** — Husky + lint-staged (prettier + eslint on staged files).
-- [ ] **Security headers** — `helmet` on the API.
-- [ ] **`.vscode/extensions.json`** — recommend nx-console, angular, eslint, prettier.
-- [ ] **Frontend baseline:** HTTP error interceptor, a simple toast/notification service, Angular Material theme wiring, and (if you want parity with Ecclesio) **Tailwind** setup. Optionally a runtime-config approach so one FE build serves all envs.
-- [ ] **Shared baseline:** pagination request/response types + a shared error-code enum, alongside the existing `ApiResponse` envelope.
-- [ ] **Seed mechanism** — a `tools/scripts/seed.ts` example.
+- [x] **OpenAPI/Swagger** — `/api/docs`, non-prod only (verified: 200 in dev, 404 in prod). Helmet CSP disabled outside prod because it breaks the Swagger UI.
+- [x] **CI** — `.github/workflows/ci.yml` (nx affected + nx-set-shas, cypress binary skipped). NOT yet proven green on GitHub — template not pushed. GHCR image push still optional/open.
+- [x] **Pre-commit** — Husky + lint-staged (prettier + eslint --fix on staged files).
+- [x] **Security headers** — helmet (verified headers on prod compose).
+- [x] **`.vscode/extensions.json`** — nx-console, angular, eslint, prettier, jest-runner, tailwind.
+- [x] **Frontend baseline** — ToastService (MatSnackBar), global functional `httpErrorInterceptor` (components keep success toasts; errors toast once globally), Material 3 theme (was already wired), Tailwind v4 via `@tailwindcss/postcss`. Found+fixed: `provideHttpClient` was missing entirely — every FE API call crashed at runtime; unit tests + build never caught it, only the (previously stale, never-run) Cypress e2e. e2e spec rewritten to cover the example CRUD round-trip — run it (`nx e2e frontend-e2e`) before calling FE work done. Runtime-config (one build, all envs) still open/optional.
+- [x] **Shared baseline** — `PaginationRequest`/`PaginatedResponse` + `ErrorCode` enum, mapped into the exception filter's `ErrorResponse.errorCode`.
+- [x] **Seed mechanism** — `npm run db:seed` (idempotent, tools/scripts/seed.ts).
 
 ---
 
