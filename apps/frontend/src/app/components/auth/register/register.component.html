@@ -1,56 +1,77 @@
 <div class="auth-page">
   <mat-card class="auth-card">
-    <mat-card-header>
-      <mat-card-title>Create account</mat-card-title>
-    </mat-card-header>
-    <mat-card-content>
-      <form class="auth-form" [formGroup]="form" (ngSubmit)="onSubmit()">
-        <mat-form-field appearance="outline">
-          <mat-label>Email</mat-label>
-          <input matInput type="email" formControlName="email" />
-          @if (form.get('email')?.hasError('required')) {
-            <mat-error>Email is required</mat-error>
-          }
-          @if (form.get('email')?.hasError('email')) {
-            <mat-error>Enter a valid email</mat-error>
-          }
-        </mat-form-field>
+    @if (!registered()) {
+      <mat-card-header>
+        <mat-card-title>Create account</mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <form class="auth-form" [formGroup]="form" (ngSubmit)="onSubmit()">
+          <mat-form-field appearance="outline">
+            <mat-label>Email</mat-label>
+            <input matInput type="email" formControlName="email" />
+            @if (form.get('email')?.hasError('required')) {
+              <mat-error>Email is required</mat-error>
+            }
+            @if (form.get('email')?.hasError('email')) {
+              <mat-error>Enter a valid email</mat-error>
+            }
+          </mat-form-field>
 
-        <mat-form-field appearance="outline">
-          <mat-label>Password</mat-label>
-          <input matInput type="password" formControlName="password" />
-          @if (form.get('password')?.hasError('required')) {
-            <mat-error>Password is required</mat-error>
-          }
-          @if (form.get('password')?.hasError('minlength')) {
-            <mat-error>At least 8 characters</mat-error>
-          }
-        </mat-form-field>
+          <mat-form-field appearance="outline">
+            <mat-label>Password</mat-label>
+            <input matInput type="password" formControlName="password" />
+            @if (form.get('password')?.hasError('required')) {
+              <mat-error>Password is required</mat-error>
+            }
+            @if (form.get('password')?.hasError('minlength')) {
+              <mat-error>At least 8 characters</mat-error>
+            }
+          </mat-form-field>
 
-        <mat-form-field appearance="outline">
-          <mat-label>Confirm password</mat-label>
-          <input matInput type="password" formControlName="passwordConfirm" />
-          @if (
-            form.hasError('passwordMismatch') &&
-            form.get('passwordConfirm')?.touched
-          ) {
-            <mat-error>Passwords do not match</mat-error>
-          }
-        </mat-form-field>
+          <mat-form-field appearance="outline">
+            <mat-label>Confirm password</mat-label>
+            <input matInput type="password" formControlName="passwordConfirm" />
+            @if (
+              form.hasError('passwordMismatch') &&
+              form.get('passwordConfirm')?.touched
+            ) {
+              <mat-error>Passwords do not match</mat-error>
+            }
+          </mat-form-field>
 
+          <button
+            mat-raised-button
+            color="primary"
+            type="submit"
+            [disabled]="!form.valid || submitting()"
+          >
+            Create account
+          </button>
+        </form>
+
+        <div class="auth-links">
+          <a [routerLink]="['/', ROUTES.LOGIN]"
+            >Already have an account? Login</a
+          >
+        </div>
+      </mat-card-content>
+    } @else {
+      <mat-card-content>
+        <h1>Check your inbox</h1>
+        <p>
+          We sent a verification link to
+          <strong>{{ submittedEmail() }}</strong
+          >. Click it to activate your account.
+        </p>
         <button
-          mat-raised-button
-          color="primary"
-          type="submit"
-          [disabled]="!form.valid || submitting()"
+          mat-stroked-button
+          type="button"
+          [disabled]="resendCooldown()"
+          (click)="resend()"
         >
-          Create account
+          Resend mail
         </button>
-      </form>
-
-      <div class="auth-links">
-        <a [routerLink]="['/', ROUTES.LOGIN]">Already have an account? Login</a>
-      </div>
-    </mat-card-content>
+      </mat-card-content>
+    }
   </mat-card>
 </div>

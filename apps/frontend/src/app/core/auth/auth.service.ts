@@ -4,6 +4,7 @@ import {
   AuthUser,
   LoginDto,
   RegisterDto,
+  RegisterResponse,
 } from '@arvid-l-monorepo-template/shared';
 import { Observable, tap } from 'rxjs';
 import { ROUTES } from '../constants/routes.constants';
@@ -40,9 +41,15 @@ export class AuthService {
       .pipe(tap((response) => this.currentUser.set(response.user)));
   }
 
-  register(data: RegisterDto): Observable<unknown> {
+  // Registration no longer returns a session — the user must click the
+  // verification link first (hard gate, see API AuthService.register).
+  register(data: RegisterDto): Observable<RegisterResponse> {
+    return this.authApi.register(data);
+  }
+
+  verifyEmail(token: string): Observable<unknown> {
     return this.authApi
-      .register(data)
+      .verifyEmail(token)
       .pipe(tap((response) => this.currentUser.set(response.user)));
   }
 

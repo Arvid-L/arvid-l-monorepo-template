@@ -7,12 +7,13 @@ import {
   ValidationErrors,
   Validators,
 } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
+import { RouterLink } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { AuthService } from '../../../core/auth/auth.service';
+import { AuthApiService } from '../../../core/auth/auth.api.service';
 import { ROUTES } from '../../../core/constants/routes.constants';
 
 // Cross-field validator: passwordConfirm must match password.
@@ -38,10 +39,13 @@ const passwordsMatch = (group: AbstractControl): ValidationErrors | null =>
 export class RegisterComponent {
   private readonly fb = inject(FormBuilder);
   private readonly auth = inject(AuthService);
-  private readonly router = inject(Router);
+  private readonly authApi = inject(AuthApiService);
 
   readonly ROUTES = ROUTES;
   readonly submitting = signal(false);
+  readonly registered = signal(false);
+  readonly resendCooldown = signal(false);
+  readonly submittedEmail = signal('');
 
   form: FormGroup = this.fb.group(
     {
@@ -60,9 +64,20 @@ export class RegisterComponent {
     this.submitting.set(true);
     const { email, password } = this.form.value;
     this.auth.register({ email, password }).subscribe({
-      next: () => this.router.navigate(['/']),
+      next: () => {
+        this.submittedEmail.set(email);
+        this.registered.set(true);
+      },
       // errors surface via the global httpErrorInterceptor toast
       error: () => this.submitting.set(false),
     });
+  }
+
+  resend(): void {
+    this.resendCooldown.set(true);
+    this.authApi.resendVerification(this.submittedEmail()).subscribe();
+    // Matches the API's 60 s reissue limit — button wakes up when a new
+    // token could actually be issued.
+    setTimeout(() => this.resendCooldown.set(false), 60_000);
   }
 }

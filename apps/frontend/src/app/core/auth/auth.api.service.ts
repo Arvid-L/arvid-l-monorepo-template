@@ -6,6 +6,7 @@ import {
   LoginDto,
   LoginResponse,
   RegisterDto,
+  RegisterResponse,
   ResetPasswordDto,
 } from '@arvid-l-monorepo-template/shared';
 import { finalize, Observable, shareReplay, tap } from 'rxjs';
@@ -30,10 +31,22 @@ export class AuthApiService {
       .pipe(tap((response) => this.storeTokens(response)));
   }
 
-  register(data: RegisterDto): Observable<LoginResponse> {
+  // Registration no longer returns tokens — the account must be verified
+  // via the mailed link first.
+  register(data: RegisterDto): Observable<RegisterResponse> {
+    return this.http.post<RegisterResponse>(`${this.apiUrl}/register`, data);
+  }
+
+  verifyEmail(token: string): Observable<LoginResponse> {
     return this.http
-      .post<LoginResponse>(`${this.apiUrl}/register`, data)
+      .post<LoginResponse>(`${this.apiUrl}/verify-email`, { token })
       .pipe(tap((response) => this.storeTokens(response)));
+  }
+
+  resendVerification(email: string): Observable<void> {
+    return this.http.post<void>(`${this.apiUrl}/resend-verification`, {
+      email,
+    });
   }
 
   forgotPassword(data: ForgotPasswordDto): Observable<void> {
