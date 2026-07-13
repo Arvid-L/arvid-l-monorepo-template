@@ -83,11 +83,23 @@ For "branch off and go fast," the biggest friction is renaming everything. Add:
 
 ## P2 — Nice-to-have
 
-- [x] **Auth scaffold** (2026-07-13, verified live) — vertical slice, opt-in by design: `users` migration + scrypt hashing (node crypto, no native deps), `@nestjs/jwt` without passport, `POST /auth/login` + protected `GET /auth/me` (the pattern to copy), `JwtAuthGuard` + `@CurrentUser`, shared `LoginDto`/`LoginResponse`/`AuthUser`, FE token storage + Bearer interceptor + `authGuard` stub (no login UI — project-specific). Users are created via `npm run user:create -- <email> <password>` — deliberately no open registration endpoint. `JWT_SECRET` env-validated (min 16 chars). To secure the whole API: register `JwtAuthGuard` as `APP_GUARD` + add a `@Public()` decorator.
+- [x] **Auth scaffold** (2026-07-13, verified live) — vertical slice, opt-in by design: `users` migration + scrypt hashing (node crypto, no native deps), `@nestjs/jwt` without passport, `POST /auth/login` + protected `GET /auth/me` (the pattern to copy), `JwtAuthGuard` + `@CurrentUser`, shared `LoginDto`/`LoginResponse`/`AuthUser`, FE token storage + Bearer interceptor + `authGuard` stub (no login UI — project-specific). Users are created via `npm run user:create -- <email> <password>` — deliberately no open registration endpoint. `JWT_SECRET` env-validated (min 16 chars). To secure the whole API: register `JwtAuthGuard` as `APP_GUARD` + add a `@Public()` decorator. _(Partially superseded by the Tier-1 round below: open registration + login UI exist now.)_
 
 - [x] **Rate limiting** (2026-07-13, verified live: 429 after budget) — global `ThrottlerGuard` 100/min per IP + strict `@Throttle` (5/min) on `/auth/login` + `/auth/refresh`. `trust proxy` set in main.ts so IPs come from `X-Forwarded-For` behind the edge nginx.
 - [x] **Dependabot** — npm weekly (grouped: angular/nestjs/nx/minor-and-patch) + github-actions weekly.
 - [x] **Refresh tokens with rotation** (2026-07-13, verified live) — opaque 48-byte tokens, only sha256 hashes stored (`refresh_tokens` table, cascade on user delete); every `POST /auth/refresh` revokes the used token and issues a new pair, `POST /auth/logout` revokes; access token default shortened to 15m (`JWT_EXPIRES_IN`), refresh TTL `REFRESH_TOKEN_TTL_DAYS` (default 30). FE: interceptor silently refreshes once on 401 and retries; refresh is single-flight (rotation breaks parallel refreshes); interceptor order in app.config is load-bearing (httpError first, auth second — retry happens before the toast).
+
+### Tier-1 baseline round (2026-07-13, all verified: unit tests + live smoke + e2e)
+
+- [x] **Roles (RBAC)** — pg enum `user_role` (admin/moderator/user, default user), role rides in the JWT (up to 15m stale after role change — forced re-login applies immediately), hierarchical `RolesGuard` (`@Roles(MODERATOR)` admits admin), `GET /auth/users` admin-only = pattern to copy. `user:create` takes optional role arg; omitting it never demotes an existing user.
+- [x] **Open registration** — `POST /auth/register`, always USER role, 409 via unique index (race-safe, no pre-SELECT), same 5/min throttle. Emails normalized lowercase in all DTOs.
+- [x] **Mail module** — nodemailer, `SMTP_*` env all optional: without `SMTP_HOST` mails are logged instead of sent (dev-friendly; prod warns at boot). Compose passes unset optionals as empty strings → `validateEnv` drops `''` values (would fail `@IsInt`/`@IsIn` otherwise).
+- [x] **Password reset** — `forgot-password` (always 204, no enumeration; mail send deliberately not awaited so SMTP latency can't leak account existence) + `reset-password` (sha256 single-use token, 1h TTL, new request kills older tokens, reset revokes ALL sessions). Reset link = `APP_BASE_URL/reset-password?token=…`.
+- [x] **FE auth UI** — login/register/forgot/reset Material pages sharing `auth-page.scss`, signal-based `AuthService` (session restore via `/auth/me` after reload), toolbar login/logout, `authGuard` redirects to `/login?returnUrl=…`. e2e `auth.cy.ts`: register→logout→login + wrong-password toast.
+- [x] **Structured logging** — nestjs-pino: JSON + req ids in prod (honors upstream `X-Request-Id`), pino-pretty in dev, `authorization`/`cookie` redacted, `/api/health` excluded. `bufferLogs: true` + `useLogger(app.get(PinoLogger))`.
+- [x] **Token purge cron** — `@nestjs/schedule` daily 04:00 deletes expired/revoked refresh + used/expired reset tokens.
+- [x] **DB backups** — `scripts/backup-db.sh` (gzipped pg_dump, rotation, optional `BACKUP_REMOTE` push) + `restore-db.sh` (confirmed destructive, stops API). Round-trip verified locally: backup → delete users → restore → login OK. Cron install in HETZNER-SETUP.md §7.
+- [x] **Migrator silent-death fix** — `process.exit(1)` right after an async pino log swallowed migration errors (container restart-looped with zero output). Now throws; the rejection prints synchronously.
 
 ### Deferred — pick up when the trigger hits
 
@@ -95,6 +107,10 @@ For "branch off and go fast," the biggest friction is renaming everything. Add:
 2. **FE runtime config** (one build serves all envs) — when a project gets a second deployed environment.
 3. **GHCR image-push workflow** — if the deploy model changes from build-on-server to pull-prebuilt-images (>1 server or slow-build pain).
 4. **`nx release` + changelog** — only if the template itself gets versioned releases.
+5. **Feature-slice nx generator** — when copying the example slice by hand gets old.
+6. **File storage module (S3-compatible)** — first project that needs uploads.
+7. **Background jobs (pg-boss, no redis needed)** — first async job.
+8. **Error tracking (Sentry/GlitchTip)** — when real users exist.
 
 ---
 

@@ -1,4 +1,4 @@
-# Template Overview — state as of 2026-07-13
+# Template Overview — state as of 2026-07-13 (evening)
 
 One-page tour of `arvid-l-monorepo-template`. Everything below is implemented,
 tested and **proven on a real deploy** (arvidlin.de, Hetzner CX23).
@@ -28,17 +28,27 @@ one-command HTTPS. Branch → rename → deploy in under an hour.
 - Global ValidationPipe + class-validator DTO classes (shared stays interfaces)
 - Exception filter with field errors + typed `ErrorCode` enum
 - `/api/health` with DB ping (wired into compose healthchecks)
-- Swagger at `/api/docs` (non-prod) · helmet · request logging
-- **Auth (opt-in):** JWT login + rotating refresh tokens (hashed server-side,
-  revocable, 15m access / 30d refresh), `JwtAuthGuard` + `@CurrentUser`,
-  users via `npm run user:create -- <email> <pw>` (no open registration)
-- Rate limiting: 100/min per IP global, 5/min on login/refresh
+- Swagger at `/api/docs` (non-prod) · helmet
+- Structured logging (nestjs-pino): JSON + request ids in prod, pretty in
+  dev, auth headers redacted, health checks excluded
+- **Auth:** register/login + rotating refresh tokens (hashed server-side,
+  revocable, 15m access / 30d refresh), `JwtAuthGuard` + `@CurrentUser`
+- **Roles:** admin/moderator/user hierarchy in the JWT; `@Roles()` +
+  `RolesGuard` (`GET /auth/users` = the admin-endpoint pattern); promote
+  via `npm run user:create -- <email> <pw> admin`
+- **Password reset:** forgot/reset endpoints (single-use hashed tokens, 1h,
+  resets kill all sessions), mail via nodemailer — without SMTP\_\* env the
+  mail lands in the log, so the flow works in dev out of the box
+- Rate limiting: 100/min per IP global, 5/min on credential endpoints
+- Daily cron purges expired tokens (`@nestjs/schedule` wired)
 
 **Frontend baseline**
 
 - Toast service + global HTTP-error interceptor (errors toast once, globally)
-- Auth stubs: token storage, Bearer interceptor with silent single-flight
-  refresh-on-401, `authGuard` route guard (bring your own login UI)
+- **Auth UI:** login / register / forgot-password / reset-password pages
+  (Material), toolbar with session state, `authGuard` with returnUrl
+- Token storage, Bearer interceptor with silent single-flight
+  refresh-on-401, session restore after reload via `/auth/me`
 
 **Deploy (the crown jewel)**
 
@@ -46,6 +56,8 @@ one-command HTTPS. Branch → rename → deploy in under an hour.
 - HTTP/HTTPS nginx template sets, `${DOMAIN}` via envsubst — zero config edits
 - `scripts/deploy-remote.sh` (scp env + build on server), `redeploy.sh`
   (hostname-guarded), `init-tls.sh` (one-time Let's Encrypt + auto-renewal)
+- `backup-db.sh` (nightly cron: gzipped pg_dump, rotation, optional
+  off-site push) + `restore-db.sh` — round-trip verified
 - Postgres → PostGIS = one image line in both compose files
 
 **DX / CI**
@@ -76,14 +88,17 @@ ssh <server> 'cd /opt/<proj> && ./scripts/init-tls.sh'   # HTTPS, once
 
 ## What's still missing (deliberate, with triggers)
 
-| Item                                    | Do it when                                              |
-| --------------------------------------- | ------------------------------------------------------- |
-| Login UI                                | project needs auth — backend + FE plumbing already done |
-| Jest coverage thresholds                | you start caring about coverage decay                   |
-| FE runtime config (one build, all envs) | a second deployed environment exists                    |
-| GHCR prebuilt images                    | >1 server or server builds get too slow                 |
-| `nx release` / changelog                | the template itself gets versioned releases             |
-| Terminus multi-check health             | more infra (redis, s3, …) joins the stack               |
+| Item                                    | Do it when                                  |
+| --------------------------------------- | ------------------------------------------- |
+| Jest coverage thresholds                | you start caring about coverage decay       |
+| FE runtime config (one build, all envs) | a second deployed environment exists        |
+| GHCR prebuilt images                    | >1 server or server builds get too slow     |
+| `nx release` / changelog                | the template itself gets versioned releases |
+| Terminus multi-check health             | more infra (redis, s3, …) joins the stack   |
+| Feature-slice nx generator              | copying the example slice by hand gets old  |
+| File storage module (S3-compatible)     | first project needs uploads                 |
+| Background jobs (pg-boss)               | first async/long-running job appears        |
+| Error tracking (Sentry/GlitchTip)       | real users exist                            |
 
 ## Where to read more
 
