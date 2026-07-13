@@ -79,6 +79,9 @@ docker compose up -d        # dev DB :5432, e2e DB :5433
 npm run serve:all           # api :3000/api, frontend :4200
 npm run quality             # lint + test + build
 npx nx e2e frontend-e2e     # real-browser e2e (needs ports 3000/4200 free)
+npm run user:create -- me@dev.local secret123 admin   # admin account
+# register/login/forgot/reset UI at /login etc.; reset mails land in the
+# API log in dev (no SMTP needed)
 
 # To production (server setup: docs/HETZNER-SETUP.md)
 cp .env.production.example .env.production   # fill in, never committed

@@ -87,10 +87,16 @@ DATABASE_PASSWORD=<generate a strong one>
 DEPLOY_HOST=<server IP or ssh alias>
 DEPLOY_USER=root
 DEPLOY_PATH=/opt/somenewproject    # already set by init-project
+JWT_SECRET=<openssl rand -hex 32>
+APP_BASE_URL=https://somenewproject.com   # used in password-reset mail links
 ```
 
 Leave `NGINX_TEMPLATES`/`COMPOSE_PROFILES` at their defaults — the TLS script
 manages them.
+
+For working password-reset mails also set the `SMTP_*` vars (any
+transactional provider or mailbox). Without them the flow still works —
+outgoing mail is written to the API log instead of sent.
 
 ## 6. First deploy
 
@@ -114,7 +120,32 @@ Issues the Let's Encrypt certificate, switches nginx to TLS (HTTP redirects
 from then on) and starts the auto-renewal service.
 **`https://somenewproject.com` is live.** No recurring TLS maintenance.
 
-## 8. Everyday loop
+## 8. Auth is already built in
+
+Users can register and log in at `/register` / `/login`; forgot/reset
+password works end-to-end (see the SMTP note above). Everyone who registers
+gets the `user` role. Create your admin account once, on the server:
+
+```bash
+ssh root@somenewproject.com 'cd /opt/somenewproject && \
+  DATABASE_HOST=127.0.0.1 DATABASE_NAME=... DATABASE_USER=... DATABASE_PASSWORD=... \
+  npx tsx tools/scripts/create-user.ts you@somewhere.com <password> admin'
+```
+
+Protect API endpoints with `@UseGuards(JwtAuthGuard, RolesGuard)` +
+`@Roles(UserRole.ADMIN)` (pattern: `GET /auth/users`), FE routes with
+`canActivate: [authGuard]`.
+
+## 9. Nightly DB backups (once, on the server)
+
+```bash
+crontab -e   # add:
+30 3 * * * /opt/somenewproject/scripts/backup-db.sh >> /var/log/db-backup.log 2>&1
+```
+
+Details + restore: [HETZNER-SETUP.md](HETZNER-SETUP.md) §7.
+
+## 10. Everyday loop
 
 ```bash
 # develop → commit → push to main, then:
