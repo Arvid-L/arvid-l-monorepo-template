@@ -40,12 +40,27 @@ export class UsersService {
     email: string,
     passwordHash: string,
     role: UserRole = UserRole.USER,
+    emailVerified = false,
   ): Promise<Selectable<UserTable>> {
     return this.db
       .insertInto('users')
-      .values({ email, password_hash: passwordHash, role })
+      .values({
+        email,
+        password_hash: passwordHash,
+        role,
+        // Scripted/bootstrap users skip the verification mail round-trip.
+        email_verified_at: emailVerified ? new Date().toISOString() : null,
+      })
       .returningAll()
       .executeTakeFirstOrThrow();
+  }
+
+  async markEmailVerified(id: string): Promise<void> {
+    await this.db
+      .updateTable('users')
+      .set({ email_verified_at: new Date().toISOString() })
+      .where('id', '=', id)
+      .execute();
   }
 
   async updatePassword(id: string, passwordHash: string): Promise<void> {
