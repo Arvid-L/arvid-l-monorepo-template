@@ -4,25 +4,30 @@ import { config } from 'dotenv';
 import { resolve } from 'path';
 import { hashPassword } from '../../apps/api/src/app/auth/password.util';
 
-// Creates (or updates the password of) a user in the dev database.
-// Usage: npm run user:create -- <email> <password>
+// Creates (or updates the password/role of) a user in the dev database.
+// Usage: npm run user:create -- <email> <password> [admin|moderator|user]
 // For production, run on the server against the compose DB, e.g.:
 //   DATABASE_HOST=127.0.0.1 DATABASE_NAME=... DATABASE_USER=... \
-//   DATABASE_PASSWORD=... npx tsx tools/scripts/create-user.ts <email> <pw>
+//   DATABASE_PASSWORD=... npx tsx tools/scripts/create-user.ts <email> <pw> admin
 if (!process.env.DATABASE_HOST) {
   config({ path: resolve(__dirname, '../../.env.dev') });
 }
 
-const [email, password] = process.argv.slice(2);
+const VALID_ROLES = ['admin', 'moderator', 'user'];
+const [rawEmail, password, role] = process.argv.slice(2);
+// The API stores and matches emails lowercase — keep this script consistent.
+const email = rawEmail?.trim().toLowerCase();
 
-if (!email || !password) {
-  console.error('Usage: npm run user:create -- <email> <password>');
+if (!email || !password || (role && !VALID_ROLES.includes(role))) {
+  console.error(
+    'Usage: npm run user:create -- <email> <password> [admin|moderator|user]',
+  );
   process.exit(1);
 }
 
 async function createUser(): Promise<void> {
   const db = new Kysely<{
-    users: { email: string; password_hash: string };
+    users: { email: string; password_hash: string; role: string };
   }>({
     dialect: new PostgresDialect({
       pool: new Pool({
@@ -38,15 +43,22 @@ async function createUser(): Promise<void> {
   try {
     await db
       .insertInto('users')
-      .values({ email, password_hash: hashPassword(password) })
+      .values({
+        email,
+        password_hash: hashPassword(password),
+        role: role ?? 'user',
+      })
       .onConflict((oc) =>
-        oc
-          .column('email')
-          .doUpdateSet({ password_hash: hashPassword(password) }),
+        oc.column('email').doUpdateSet({
+          password_hash: hashPassword(password),
+          // Only touch the role of an existing user when explicitly given —
+          // a plain password reset must not demote an admin.
+          ...(role ? { role } : {}),
+        }),
       )
       .execute();
 
-    console.log(`✓ User ${email} created/updated`);
+    console.log(`✓ User ${email} created/updated${role ? ` (${role})` : ''}`);
   } finally {
     await db.destroy();
   }

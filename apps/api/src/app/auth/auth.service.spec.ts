@@ -1,6 +1,7 @@
 import { Test } from '@nestjs/testing';
 import { JwtModule } from '@nestjs/jwt';
-import { UnauthorizedException } from '@nestjs/common';
+import { ConflictException, UnauthorizedException } from '@nestjs/common';
+import { UserRole } from '@arvid-l-monorepo-template/shared';
 import { AuthService } from './auth.service';
 import { UsersService } from './users.service';
 import { RefreshTokensService } from './refresh-tokens.service';
@@ -10,6 +11,7 @@ describe('AuthService', () => {
   let service: AuthService;
   const findByEmail = jest.fn();
   const findById = jest.fn();
+  const create = jest.fn();
   const issue = jest.fn();
   const findValid = jest.fn();
   const revoke = jest.fn();
@@ -18,6 +20,7 @@ describe('AuthService', () => {
     id: 'user-1',
     email: 'admin@example.org',
     password_hash: hashPassword('secret-password'),
+    role: UserRole.ADMIN,
   };
 
   beforeAll(async () => {
@@ -25,7 +28,7 @@ describe('AuthService', () => {
       imports: [JwtModule.register({ secret: 'test-secret-not-production' })],
       providers: [
         AuthService,
-        { provide: UsersService, useValue: { findByEmail, findById } },
+        { provide: UsersService, useValue: { findByEmail, findById, create } },
         {
           provide: RefreshTokensService,
           useValue: { issue, findValid, revoke },
@@ -52,7 +55,11 @@ describe('AuthService', () => {
 
       expect(result.accessToken.split('.')).toHaveLength(3);
       expect(result.refreshToken).toBe('new-refresh-token');
-      expect(result.user).toEqual({ id: 'user-1', email: 'admin@example.org' });
+      expect(result.user).toEqual({
+        id: 'user-1',
+        email: 'admin@example.org',
+        role: UserRole.ADMIN,
+      });
     });
 
     it('rejects a wrong password', async () => {
@@ -70,6 +77,42 @@ describe('AuthService', () => {
       await expect(
         service.login('nobody@example.org', 'whatever'),
       ).rejects.toBeInstanceOf(UnauthorizedException);
+    });
+  });
+
+  describe('register', () => {
+    it('creates the user and returns a token pair', async () => {
+      create.mockResolvedValue({
+        id: 'user-2',
+        email: 'new@example.org',
+        role: UserRole.USER,
+      });
+
+      const result = await service.register('new@example.org', 'password123');
+
+      expect(create).toHaveBeenCalledWith(
+        'new@example.org',
+        expect.stringMatching(/^scrypt\$/),
+      );
+      expect(result.accessToken.split('.')).toHaveLength(3);
+      expect(result.user).toEqual({
+        id: 'user-2',
+        email: 'new@example.org',
+        role: UserRole.USER,
+      });
+    });
+
+    it('maps a duplicate email (unique violation) to 409', async () => {
+      create.mockRejectedValue(
+        Object.assign(new Error('dup'), {
+          code: '23505',
+        }),
+      );
+
+      await expect(
+        service.register('taken@example.org', 'password123'),
+      ).rejects.toBeInstanceOf(ConflictException);
+      expect(issue).not.toHaveBeenCalled();
     });
   });
 

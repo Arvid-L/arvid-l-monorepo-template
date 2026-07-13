@@ -1,8 +1,8 @@
-import { LoginDto as SharedLoginDto } from '@arvid-l-monorepo-template/shared';
+import { RegisterDto as SharedRegisterDto } from '@arvid-l-monorepo-template/shared';
 import { Transform } from 'class-transformer';
-import { IsEmail, IsNotEmpty, IsString } from 'class-validator';
+import { IsEmail, IsString, MinLength } from 'class-validator';
 
-export class LoginDto implements SharedLoginDto {
+export class RegisterDto implements SharedRegisterDto {
   // Emails are stored and matched lowercase — normalize on the way in.
   @Transform(({ value }) =>
     typeof value === 'string' ? value.trim().toLowerCase() : value,
@@ -11,6 +11,6 @@ export class LoginDto implements SharedLoginDto {
   email!: string;
 
   @IsString()
-  @IsNotEmpty()
+  @MinLength(8)
   password!: string;
 }
