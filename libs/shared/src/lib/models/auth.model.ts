@@ -34,3 +34,16 @@ export interface LoginResponse {
   refreshToken: string;
   user: AuthUser;
 }
+
+export interface VerifyEmailDto {
+  token: string;
+}
+
+export interface ResendVerificationDto {
+  email: string;
+}
+
+// register() no longer returns tokens — the account must be verified first.
+export interface RegisterResponse {
+  message: string;
+}
