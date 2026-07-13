@@ -33,6 +33,11 @@ one-command HTTPS. Branch → rename → deploy in under an hour.
   dev, auth headers redacted, health checks excluded
 - **Auth:** register/login + rotating refresh tokens (hashed server-side,
   revocable, 15m access / 30d refresh), `JwtAuthGuard` + `@CurrentUser`
+- **Email verification (hard gate):** register creates the account
+  unverified and mails a link (`/verify-email?token=…`, 24h, single-use,
+  60s resend limit); login answers `403` + `errorCode: EMAIL_NOT_VERIFIED`
+  until the link is clicked; verifying logs the user straight in.
+  `user:create` accounts are pre-verified (bootstrap/admin path)
 - **Roles:** admin/moderator/user hierarchy in the JWT; `@Roles()` +
   `RolesGuard` (`GET /auth/users` = the admin-endpoint pattern); promote
   via `npm run user:create -- <email> <pw> admin`
@@ -45,8 +50,10 @@ one-command HTTPS. Branch → rename → deploy in under an hour.
 **Frontend baseline**
 
 - Toast service + global HTTP-error interceptor (errors toast once, globally)
-- **Auth UI:** login / register / forgot-password / reset-password pages
-  (Material), toolbar with session state, `authGuard` with returnUrl
+- **Auth UI:** login / register / forgot-password / reset-password /
+  verify-email pages (Material), toolbar with session state, `authGuard`
+  with returnUrl; register ends in a "check your inbox" state with resend
+  cooldown, login offers resend on unverified accounts
 - Token storage, Bearer interceptor with silent single-flight
   refresh-on-401, session restore after reload via `/auth/me`
 
@@ -58,6 +65,9 @@ one-command HTTPS. Branch → rename → deploy in under an hour.
   (hostname-guarded), `init-tls.sh` (one-time Let's Encrypt + auto-renewal)
 - `backup-db.sh` (nightly cron: gzipped pg_dump, rotation, optional
   off-site push) + `restore-db.sh` — round-trip verified
+- **Mail:** documented Hetzner-webhosting SMTP path (NEW-PROJECT.md §5b:
+  konsoleH mailbox → `SMTP_*` env) + `npm run mail:test -- <recipient>`
+  smoke script; any transactional provider works the same way
 - Postgres → PostGIS = one image line in both compose files
 
 **DX / CI**
@@ -79,9 +89,10 @@ docker compose up -d        # dev DB :5432, e2e DB :5433
 npm run serve:all           # api :3000/api, frontend :4200
 npm run quality             # lint + test + build
 npx nx e2e frontend-e2e     # real-browser e2e (needs ports 3000/4200 free)
-npm run user:create -- me@dev.local secret123 admin   # admin account
-# register/login/forgot/reset UI at /login etc.; reset mails land in the
-# API log in dev (no SMTP needed)
+npm run user:create -- me@dev.local secret123 admin   # admin (pre-verified)
+# register/login/forgot/reset/verify UI at /login etc.; verification and
+# reset mails land in the API log in dev (no SMTP needed) — grep the log
+# for the /verify-email link to activate a dev account
 
 # To production (server setup: docs/HETZNER-SETUP.md)
 cp .env.production.example .env.production   # fill in, never committed
