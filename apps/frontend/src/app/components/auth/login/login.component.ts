@@ -63,7 +63,7 @@ export class LoginComponent {
         // 403 EMAIL_NOT_VERIFIED gets its own UI (resend link) instead of
         // only the generic toast from httpErrorInterceptor.
         this.unverifiedEmail.set(
-          err.error?.code === ErrorCode.EMAIL_NOT_VERIFIED
+          err.error?.errorCode === ErrorCode.EMAIL_NOT_VERIFIED
             ? this.form.value.email
             : null,
         );

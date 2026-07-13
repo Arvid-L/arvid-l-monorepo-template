@@ -59,12 +59,13 @@ export class AuthService {
       throw new UnauthorizedException('Invalid credentials');
     }
 
-    // Hard gate: unverified accounts cannot log in. Distinct code so the FE
-    // can offer "resend verification mail" instead of a generic error.
+    // Hard gate: unverified accounts cannot log in. Distinct errorCode
+    // (passed through HttpExceptionFilter) so the FE can offer "resend
+    // verification mail" instead of a generic error.
     if (!user.email_verified_at) {
       throw new ForbiddenException({
         statusCode: 403,
-        code: ErrorCode.EMAIL_NOT_VERIFIED,
+        errorCode: ErrorCode.EMAIL_NOT_VERIFIED,
         message: 'Please verify your email address first',
       });
     }

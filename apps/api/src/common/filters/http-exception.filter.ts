@@ -39,17 +39,23 @@ export class HttpExceptionFilter implements ExceptionFilter {
 
     // HttpException responses carry details (e.g. ValidationPipe field errors)
     // in getResponse().message — surface those instead of the generic message.
+    // A custom errorCode in the exception response (e.g. EMAIL_NOT_VERIFIED)
+    // overrides the generic per-status mapping.
     let message: string | string[] = 'Internal server error';
+    let customErrorCode: ErrorCode | undefined;
     if (exception instanceof HttpException) {
       const exceptionResponse = exception.getResponse();
       if (typeof exceptionResponse === 'string') {
         message = exceptionResponse;
       } else if (
         typeof exceptionResponse === 'object' &&
-        exceptionResponse !== null &&
-        'message' in exceptionResponse
+        exceptionResponse !== null
       ) {
-        message = (exceptionResponse as { message: string | string[] }).message;
+        message =
+          (exceptionResponse as { message?: string | string[] }).message ??
+          exception.message;
+        customErrorCode = (exceptionResponse as { errorCode?: ErrorCode })
+          .errorCode;
       } else {
         message = exception.message;
       }
@@ -59,7 +65,10 @@ export class HttpExceptionFilter implements ExceptionFilter {
       statusCode: status,
       message,
       error: HttpStatus[status],
-      errorCode: ERROR_CODE_BY_STATUS[status] ?? ErrorCode.INTERNAL_ERROR,
+      errorCode:
+        customErrorCode ??
+        ERROR_CODE_BY_STATUS[status] ??
+        ErrorCode.INTERNAL_ERROR,
       timestamp: new Date().toISOString(),
       path: request.url,
     };

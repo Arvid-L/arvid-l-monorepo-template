@@ -131,7 +131,7 @@ describe('AuthService', () => {
       await expect(
         service.login('admin@example.org', 'secret-password'),
       ).rejects.toMatchObject({
-        response: expect.objectContaining({ code: 'EMAIL_NOT_VERIFIED' }),
+        response: expect.objectContaining({ errorCode: 'EMAIL_NOT_VERIFIED' }),
       });
       expect(issue).not.toHaveBeenCalled();
     });

@@ -53,7 +53,7 @@ describe('LoginComponent', () => {
         () =>
           new HttpErrorResponse({
             status: 403,
-            error: { code: 'EMAIL_NOT_VERIFIED' },
+            error: { errorCode: 'EMAIL_NOT_VERIFIED' },
           }),
       ),
     );
@@ -70,7 +70,7 @@ describe('LoginComponent', () => {
         () =>
           new HttpErrorResponse({
             status: 401,
-            error: { code: 'UNAUTHORIZED' },
+            error: { errorCode: 'UNAUTHORIZED' },
           }),
       ),
     );
