@@ -36,7 +36,7 @@
 
 - Produces: `RegisterResponse { message: string }`, `VerifyEmailDto { token: string }`, `ResendVerificationDto { email: string }`, `ErrorCode.EMAIL_NOT_VERIFIED` — consumed by every later task.
 
-- [ ] **Step 1: Add the new types**
+- [x] **Step 1: Add the new types**
 
 Append to `libs/shared/src/lib/models/auth.model.ts`:
 
@@ -61,12 +61,12 @@ Add to the enum in `libs/shared/src/lib/enums/error-code.enum.ts` (after `FORBID
   EMAIL_NOT_VERIFIED = 'EMAIL_NOT_VERIFIED',
 ```
 
-- [ ] **Step 2: Verify the lib builds**
+- [x] **Step 2: Verify the lib builds**
 
 Run: `npx nx build shared && npx nx lint shared`
 Expected: both succeed.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add libs/shared
@@ -89,7 +89,7 @@ git commit -m "feat(shared): types for email verification flow"
 
 - Produces: `email_verification_tokens` table in `Database`, `UserTable.email_verified_at: string | Date | null`.
 
-- [ ] **Step 1: Write the migration**
+- [x] **Step 1: Write the migration**
 
 `apps/api/src/database/migrations/006_add_email_verification.ts` (model: `005_create_password_reset_tokens_table.ts`):
 
@@ -125,7 +125,7 @@ export async function down(db: Kysely<any>): Promise<void> {
 }
 ```
 
-- [ ] **Step 2: Register the migration**
+- [x] **Step 2: Register the migration**
 
 In `apps/api/src/database/migrations/_all-migrations.ts` add the import and map entry:
 
@@ -137,7 +137,7 @@ import * as migration_006_email_verification from './006_add_email_verification'
   migration_006_email_verification,
 ```
 
-- [ ] **Step 3: Table types**
+- [x] **Step 3: Table types**
 
 Create `apps/api/src/database/tables/email-verification-token.table.ts`:
 
@@ -168,7 +168,7 @@ import { EmailVerificationTokenTable } from './tables/email-verification-token.t
 email_verification_tokens: EmailVerificationTokenTable;
 ```
 
-- [ ] **Step 4: Run the API tests + boot check**
+- [x] **Step 4: Run the API tests + boot check**
 
 Run: `npx nx test api`
 Expected: existing suites pass (nothing consumes the new column yet — failures here mean a typo in the types).
@@ -176,7 +176,7 @@ Expected: existing suites pass (nothing consumes the new column yet — failures
 Run: `docker compose up -d && npx nx serve api` briefly (Ctrl-C after boot logs).
 Expected log line: migration `migration_006_email_verification` executed, no errors.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add apps/api/src/database
@@ -197,7 +197,7 @@ git commit -m "feat(api): email_verified_at column + email_verification_tokens t
 - Consumes: `Database` with `email_verification_tokens` (Task 2).
 - Produces: `EmailVerificationTokensService.issue(userId: string): Promise<string | null>` (null = rate-limited), `findValid(token: string)`, `markUsed(id: string)`.
 
-- [ ] **Step 1: Write the service** (clone of `password-reset-tokens.service.ts`, two deltas: 24 h TTL, 60 s reissue guard)
+- [x] **Step 1: Write the service** (clone of `password-reset-tokens.service.ts`, two deltas: 24 h TTL, 60 s reissue guard)
 
 ```typescript
 import { Inject, Injectable } from '@nestjs/common';
@@ -259,16 +259,16 @@ export class EmailVerificationTokensService {
 }
 ```
 
-- [ ] **Step 2: Register in `auth.module.ts`**
+- [x] **Step 2: Register in `auth.module.ts`**
 
 Add `EmailVerificationTokensService` to the imports at top and to the `providers` array (next to `PasswordResetTokensService`).
 
-- [ ] **Step 3: Lint + build**
+- [x] **Step 3: Lint + build**
 
 Run: `npx nx lint api && npx nx build api`
 Expected: green. (Unit coverage for this service comes through `auth.service.spec.ts` in Task 5, matching how `PasswordResetTokensService` is covered.)
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add apps/api/src/app/auth
@@ -287,7 +287,7 @@ git commit -m "feat(api): email verification token service"
 
 - Produces: `create(email, passwordHash, role?, emailVerified = false)`, `markEmailVerified(id: string): Promise<void>`.
 
-- [ ] **Step 1: Extend `create()` and add `markEmailVerified()`**
+- [x] **Step 1: Extend `create()` and add `markEmailVerified()`**
 
 Replace the existing `create` and append the new method:
 
@@ -320,12 +320,12 @@ Replace the existing `create` and append the new method:
   }
 ```
 
-- [ ] **Step 2: Lint + test**
+- [x] **Step 2: Lint + test**
 
 Run: `npx nx lint api && npx nx test api`
 Expected: green.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add apps/api/src/app/auth/users.service.ts
@@ -349,7 +349,7 @@ git commit -m "feat(api): users service supports pre-verified accounts"
 - Consumes: `EmailVerificationTokensService` (Task 3), `UsersService.markEmailVerified` (Task 4), shared types (Task 1).
 - Produces: `POST /auth/verify-email {token} → LoginResponse`, `POST /auth/resend-verification {email} → 204`, changed `POST /auth/register → RegisterResponse`, `login()` throws `ForbiddenException` with `code: EMAIL_NOT_VERIFIED`.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 In `auth.service.spec.ts`: add mocks for the new service next to the existing reset mocks —
 
@@ -466,12 +466,12 @@ describe('resendVerification', () => {
 
 Also update the existing register test (it currently expects a token pair) to the new no-tokens contract.
 
-- [ ] **Step 2: Run tests to verify they fail**
+- [x] **Step 2: Run tests to verify they fail**
 
 Run: `npx nx test api --testPathPattern=auth.service`
 Expected: FAIL — `verifyEmail`/`resendVerification` don't exist, register still returns tokens.
 
-- [ ] **Step 3: Implement `auth.service.ts` changes**
+- [x] **Step 3: Implement `auth.service.ts` changes**
 
 Imports: add `ForbiddenException` to the `@nestjs/common` import, `ErrorCode` and `RegisterResponse` to the shared import, and:
 
@@ -578,7 +578,7 @@ Replace `register()`:
   }
 ```
 
-- [ ] **Step 4: DTOs**
+- [x] **Step 4: DTOs**
 
 `apps/api/src/app/auth/dto/verify-email.dto.ts`:
 
@@ -608,7 +608,7 @@ export class ResendVerificationDto implements SharedResendVerificationDto {
 }
 ```
 
-- [ ] **Step 5: Controller endpoints**
+- [x] **Step 5: Controller endpoints**
 
 In `auth.controller.ts`: add `RegisterResponse` to the shared import, import both new DTOs, change `register()`'s return type to `Promise<RegisterResponse>`, and add after `resetPassword`:
 
@@ -629,12 +629,12 @@ In `auth.controller.ts`: add `RegisterResponse` to the shared import, import bot
   }
 ```
 
-- [ ] **Step 6: Run tests to verify they pass**
+- [x] **Step 6: Run tests to verify they pass**
 
 Run: `npx nx test api`
 Expected: PASS, including the updated register contract.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add apps/api/src/app/auth libs/shared
@@ -650,14 +650,14 @@ git commit -m "feat(api): email verification — register gate, verify + resend 
 - Modify: `apps/api/src/app/auth/token-cleanup.service.ts`
 - Test: `apps/api/src/app/auth/token-cleanup.service.spec.ts`
 
-- [ ] **Step 1: Extend the spec** — mirror the existing expectations: the spec asserts deletes on `refresh_tokens` and `password_reset_tokens`; add the same assertion pattern for `email_verification_tokens`.
+- [x] **Step 1: Extend the spec** — mirror the existing expectations: the spec asserts deletes on `refresh_tokens` and `password_reset_tokens`; add the same assertion pattern for `email_verification_tokens`.
 
-- [ ] **Step 2: Run to verify it fails**
+- [x] **Step 2: Run to verify it fails**
 
 Run: `npx nx test api --testPathPattern=token-cleanup`
 Expected: FAIL.
 
-- [ ] **Step 3: Implement** — in `purgeStaleTokens()` add after the `reset` block:
+- [x] **Step 3: Implement** — in `purgeStaleTokens()` add after the `reset` block:
 
 ```typescript
 const verification = await this.db
@@ -672,12 +672,12 @@ and extend the log line:
 this.logger.log(`Purged ${refresh.numDeletedRows} stale refresh tokens, ` + `${reset.numDeletedRows} stale password reset tokens, ` + `${verification.numDeletedRows} stale email verification tokens`);
 ```
 
-- [ ] **Step 4: Run tests to verify they pass**
+- [x] **Step 4: Run tests to verify they pass**
 
 Run: `npx nx test api --testPathPattern=token-cleanup`
 Expected: PASS.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add apps/api/src/app/auth/token-cleanup.service.ts apps/api/src/app/auth/token-cleanup.service.spec.ts
@@ -692,16 +692,16 @@ git commit -m "feat(api): purge stale email verification tokens"
 
 - Modify: `tools/scripts/create-user.ts`
 
-- [ ] **Step 1: Add `email_verified_at`** — the script's insert `values({...})` gains `email_verified_at: new Date().toISOString(),` and the `doUpdateSet({...})` gains the same line (bootstrap/admin path must never end up gated). Update the script's inline type from `{ email: string; password_hash: string; role: string }` to include `email_verified_at: string`.
+- [x] **Step 1: Add `email_verified_at`** — the script's insert `values({...})` gains `email_verified_at: new Date().toISOString(),` and the `doUpdateSet({...})` gains the same line (bootstrap/admin path must never end up gated). Update the script's inline type from `{ email: string; password_hash: string; role: string }` to include `email_verified_at: string`.
 
-- [ ] **Step 2: Verify against the dev DB**
+- [x] **Step 2: Verify against the dev DB**
 
 Run: `docker compose up -d && npm run user:create -- script-test@example.org test-password-123`
 Expected: `✓ User script-test@example.org created/updated`.
 Then: `docker compose exec -T postgres psql -U postgres -d arvid-l-monorepo-template-db -c "select email, email_verified_at from users where email='script-test@example.org'"`
 Expected: non-null `email_verified_at`. (Check the container/db/user names in `docker-compose.yml` if psql refuses.)
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add tools/scripts/create-user.ts
@@ -725,7 +725,7 @@ git commit -m "feat(tools): create-user marks accounts verified"
 - Consumes: shared `RegisterResponse`, `VerifyEmailDto`, `ResendVerificationDto` (Task 1); API endpoints (Task 5).
 - Produces: `AuthApiService.verifyEmail(token): Observable<LoginResponse>` (stores tokens), `AuthApiService.resendVerification(email): Observable<void>`, `AuthService.register(): Observable<RegisterResponse>` (no state change), `AuthService.verifyEmail(token)` (sets currentUser). Task 9/10 call these.
 
-- [ ] **Step 1: `auth.api.service.ts`** — add `RegisterResponse` to the shared import; register no longer stores tokens:
+- [x] **Step 1: `auth.api.service.ts`** — add `RegisterResponse` to the shared import; register no longer stores tokens:
 
 ```typescript
   register(data: RegisterDto): Observable<RegisterResponse> {
@@ -745,7 +745,7 @@ git commit -m "feat(tools): create-user marks accounts verified"
   }
 ```
 
-- [ ] **Step 2: `auth.service.ts` (FE)** — register no longer logs in; verify does:
+- [x] **Step 2: `auth.service.ts` (FE)** — register no longer logs in; verify does:
 
 ```typescript
   // Registration no longer returns a session — the user must click the
@@ -763,7 +763,7 @@ git commit -m "feat(tools): create-user marks accounts verified"
 
 (`RegisterResponse` joins the shared import.)
 
-- [ ] **Step 3: Register component — inbox state**
+- [x] **Step 3: Register component — inbox state**
 
 `register.component.ts`: add signals + resend handling, stop navigating on success:
 
@@ -808,14 +808,14 @@ Add (inject `AuthApiService` as `authApi` alongside the existing injects):
 
 (Keep the surrounding `mat-card` structure — only the inner content branches.)
 
-- [ ] **Step 4: FE tests**
+- [x] **Step 4: FE tests**
 
 Follow the existing FE spec pattern (look at a neighboring component spec for TestBed setup). Cover: submit → `registered()` true and no navigation; `resend()` → `resendVerification` called and cooldown set.
 
 Run: `npx nx test frontend`
 Expected: PASS.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add apps/frontend/src/app
@@ -838,7 +838,7 @@ git commit -m "feat(frontend): register flow ends in check-your-inbox state"
 
 - Consumes: `AuthService.verifyEmail` (Task 8), `AuthApiService.resendVerification` (Task 8).
 
-- [ ] **Step 1: Route constant** — in `routes.constants.ts`:
+- [x] **Step 1: Route constant** — in `routes.constants.ts`:
 
 ```typescript
   // Keep in sync with the link in the API's verification mail
@@ -846,7 +846,7 @@ git commit -m "feat(frontend): register flow ends in check-your-inbox state"
   VERIFY_EMAIL: 'verify-email',
 ```
 
-- [ ] **Step 2: Component** (`verify-email.component.ts`) — model: `reset-password.component.ts`:
+- [x] **Step 2: Component** (`verify-email.component.ts`) — model: `reset-password.component.ts`:
 
 ```typescript
 import { Component, inject, signal } from '@angular/core';
@@ -911,7 +911,7 @@ export class VerifyEmailComponent {
 }
 ```
 
-- [ ] **Step 3: Template** (`verify-email.component.html`) — match the card markup of `reset-password.component.html` (copy its shell):
+- [x] **Step 3: Template** (`verify-email.component.html`) — match the card markup of `reset-password.component.html` (copy its shell):
 
 ```html
 <div class="auth-page">
@@ -943,7 +943,7 @@ export class VerifyEmailComponent {
 
 (Adjust the wrapper classes to exactly match `reset-password.component.html` — copy its outer structure.)
 
-- [ ] **Step 4: Wire up** — export from `components/auth/index.ts`, add route in `app.routes.ts`:
+- [x] **Step 4: Wire up** — export from `components/auth/index.ts`, add route in `app.routes.ts`:
 
 ```typescript
   {
@@ -954,12 +954,12 @@ export class VerifyEmailComponent {
 
 (Route stays public — must be reachable logged-out.)
 
-- [ ] **Step 5: Test + lint**
+- [x] **Step 5: Test + lint**
 
 Run: `npx nx test frontend && npx nx lint frontend`
 Expected: PASS. Add a component spec covering: valid token → navigate to `/`; missing/invalid token → error state; resend → `resendVerification` called (mirror the register spec's TestBed setup from Task 8).
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add apps/frontend/src/app
@@ -979,7 +979,7 @@ git commit -m "feat(frontend): verify-email landing page"
 
 - Consumes: `ErrorCode.EMAIL_NOT_VERIFIED` (shared), `AuthApiService.resendVerification` (Task 8). API sends `{ code: 'EMAIL_NOT_VERIFIED' }` in the 403 body (Task 5).
 
-- [ ] **Step 1: Component logic**
+- [x] **Step 1: Component logic**
 
 Imports: `HttpErrorResponse` from `@angular/common/http`, `ErrorCode` from the shared lib, inject `AuthApiService` as `authApi`. Add signals:
 
@@ -1017,7 +1017,7 @@ Add:
   }
 ```
 
-- [ ] **Step 2: Template** — inside the card, after the form:
+- [x] **Step 2: Template** — inside the card, after the form:
 
 ```html
 @if (unverifiedEmail()) {
@@ -1029,12 +1029,12 @@ Add:
 }
 ```
 
-- [ ] **Step 3: Test + lint**
+- [x] **Step 3: Test + lint**
 
 Run: `npx nx test frontend && npx nx lint frontend`
 Expected: PASS. Spec cases: 403 with code `EMAIL_NOT_VERIFIED` → `unverifiedEmail()` set; 401 → stays null.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add apps/frontend/src/app/components/auth/login
@@ -1051,7 +1051,7 @@ git commit -m "feat(frontend): resend option on unverified login"
 
 The old happy path (register → logged in) is gone by design. New coverage:
 
-- [ ] **Step 1: Rewrite `auth.cy.ts`**
+- [x] **Step 1: Rewrite `auth.cy.ts`**
 
 ```typescript
 describe('auth flow', () => {
@@ -1131,12 +1131,12 @@ describe('auth flow', () => {
 });
 ```
 
-- [ ] **Step 2: Run e2e**
+- [x] **Step 2: Run e2e**
 
 Run: `docker compose up -d && npx nx e2e frontend-e2e`
 Expected: PASS. (The e2e target boots API + FE against the :5433 test DB — check `apps/frontend-e2e/project.json` if the wiring looks different and adapt the `createVerifiedUser` env values to `.env.e2e`.)
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add apps/frontend-e2e
@@ -1155,7 +1155,7 @@ git commit -m "test(e2e): auth flow with email verification gate"
 - Modify: `docs/NEW-PROJECT.md`
 - Modify: `docs/HETZNER-SETUP.md`
 
-- [ ] **Step 1: Smoke-test script** (`tools/scripts/send-test-mail.ts`):
+- [x] **Step 1: Smoke-test script** (`tools/scripts/send-test-mail.ts`):
 
 ```typescript
 import { createTransport } from 'nodemailer';
@@ -1210,7 +1210,7 @@ Add to `package.json` scripts (after `user:create`):
     "mail:test": "tsx tools/scripts/send-test-mail.ts",
 ```
 
-- [ ] **Step 2: `.env.production.example`** — replace the SMTP block's comment header with the Hetzner-flavored version (keep all variable names):
+- [x] **Step 2: `.env.production.example`** — replace the SMTP block's comment header with the Hetzner-flavored version (keep all variable names):
 
 ```dotenv
 # Outgoing mail (verification, password reset). All optional: without
@@ -1231,7 +1231,7 @@ Add to `package.json` scripts (after `user:create`):
 #MAIL_FROM=noreply@example.org
 ```
 
-- [ ] **Step 3: `docs/NEW-PROJECT.md`** — insert a new section between §5 (Production config) and §6 (First deploy), renumbering is NOT needed if you title it "5b. Mail (Hetzner webhosting)"; also update the §8 auth paragraph:
+- [x] **Step 3: `docs/NEW-PROJECT.md`** — insert a new section between §5 (Production config) and §6 (First deploy), renumbering is NOT needed if you title it "5b. Mail (Hetzner webhosting)"; also update the §8 auth paragraph:
 
 New section:
 
@@ -1267,14 +1267,14 @@ Forgot/reset password works the same way. Registration ends in a
 "check your inbox" screen — that mail arriving is your smoke test for §5b.
 ```
 
-- [ ] **Step 4: `docs/HETZNER-SETUP.md`** — add one line to its intro or ToC area: `Mail setup (Hetzner webhosting SMTP + inboxes): see NEW-PROJECT.md §5b.`
+- [x] **Step 4: `docs/HETZNER-SETUP.md`** — add one line to its intro or ToC area: `Mail setup (Hetzner webhosting SMTP + inboxes): see NEW-PROJECT.md §5b.`
 
-- [ ] **Step 5: Verify docs render + script compiles**
+- [x] **Step 5: Verify docs render + script compiles**
 
 Run: `npx tsx tools/scripts/send-test-mail.ts` (no args)
 Expected: `Usage: npm run mail:test -- <recipient>` and exit 1.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add tools/scripts/send-test-mail.ts package.json .env.production.example docs
@@ -1285,24 +1285,24 @@ git commit -m "docs+tools: Hetzner webhosting mail path + mail:test smoke script
 
 ### Task 13: Full verification pass
 
-- [ ] **Step 1: Quality gate**
+- [x] **Step 1: Quality gate**
 
 Run: `npm run quality`
 Expected: all targets green (known FE bundle-budget warning is acceptable).
 
-- [ ] **Step 2: E2E**
+- [x] **Step 2: E2E**
 
 Run: `docker compose up -d && npx nx e2e frontend-e2e`
 Expected: PASS.
 
-- [ ] **Step 3: Manual smoke (dev)**
+- [x] **Step 3: Manual smoke (dev)**
 
 Run `npm run serve:all`, register a user at `http://localhost:4200/register`, confirm: inbox screen appears; API log contains the verification link (`Mail (not sent, no SMTP)`); opening that link verifies + logs in; logout → login works; a second registration + login attempt without verifying shows the resend UI.
 
-- [ ] **Step 4: Spec cross-check**
+- [x] **Step 4: Spec cross-check**
 
 Re-read `docs/superpowers/specs/2026-07-13-hetzner-mail-and-email-verification-design.md` — every spec section must map to shipped code/doc. Fix gaps before declaring done.
 
-- [ ] **Step 5: Commit any stragglers, then report**
+- [x] **Step 5: Commit any stragglers, then report**
 
 Summarize what changed, evidence per verification step (exact command outputs), and anything that deviated from this plan.
