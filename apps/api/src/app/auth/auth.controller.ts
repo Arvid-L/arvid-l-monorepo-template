@@ -22,6 +22,8 @@ import { CurrentUser } from './current-user.decorator';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
 import { RefreshDto } from './dto/refresh.dto';
+import { ForgotPasswordDto } from './dto/forgot-password.dto';
+import { ResetPasswordDto } from './dto/reset-password.dto';
 
 // Credential endpoints get a strict rate limit on top of the global one
 // (brute-force protection).
@@ -58,6 +60,21 @@ export class AuthController {
   @HttpCode(HttpStatus.NO_CONTENT)
   async logout(@Body() refreshDto: RefreshDto): Promise<void> {
     await this.authService.logout(refreshDto.refreshToken);
+  }
+
+  // Always 204, whether or not the email exists (no account enumeration).
+  @Post('forgot-password')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @Throttle(CREDENTIAL_THROTTLE)
+  async forgotPassword(@Body() dto: ForgotPasswordDto): Promise<void> {
+    await this.authService.forgotPassword(dto.email);
+  }
+
+  @Post('reset-password')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @Throttle(CREDENTIAL_THROTTLE)
+  async resetPassword(@Body() dto: ResetPasswordDto): Promise<void> {
+    await this.authService.resetPassword(dto.token, dto.password);
   }
 
   // Protected example — the pattern to copy for any secured endpoint.

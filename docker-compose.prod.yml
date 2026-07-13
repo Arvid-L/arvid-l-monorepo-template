@@ -49,6 +49,14 @@ services:
       DATABASE_PASSWORD: ${DATABASE_PASSWORD}
       CORS_ORIGIN: ${CORS_ORIGIN:-}
       JWT_SECRET: ${JWT_SECRET:?JWT_SECRET is required}
+      # Mail: without SMTP_HOST outgoing mail is only logged (see MailService)
+      APP_BASE_URL: ${APP_BASE_URL:-https://${DOMAIN}}
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_PORT: ${SMTP_PORT:-}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASSWORD: ${SMTP_PASSWORD:-}
+      SMTP_SECURE: ${SMTP_SECURE:-}
+      MAIL_FROM: ${MAIL_FROM:-noreply@${DOMAIN}}
     depends_on:
       postgres:
         condition: service_healthy

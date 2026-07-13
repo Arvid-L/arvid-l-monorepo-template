@@ -61,4 +61,15 @@ export class RefreshTokensService {
       .where('id', '=', id)
       .execute();
   }
+
+  // Kills every session of a user — used after a password reset so a
+  // potentially compromised account starts from zero logged-in devices.
+  async revokeAllForUser(userId: string): Promise<void> {
+    await this.db
+      .updateTable('refresh_tokens')
+      .set({ revoked_at: new Date().toISOString() })
+      .where('user_id', '=', userId)
+      .where('revoked_at', 'is', null)
+      .execute();
+  }
 }

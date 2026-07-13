@@ -1,16 +1,21 @@
 import {
+  BadRequestException,
   ConflictException,
   Injectable,
+  Logger,
   UnauthorizedException,
 } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import {
   AuthUser,
   LoginResponse,
   UserRole,
 } from '@arvid-l-monorepo-template/shared';
+import { MailService } from '../mail/mail.service';
 import { UsersService } from './users.service';
 import { RefreshTokensService } from './refresh-tokens.service';
+import { PasswordResetTokensService } from './password-reset-tokens.service';
 import { hashPassword, verifyPassword } from './password.util';
 
 const PG_UNIQUE_VIOLATION = '23505';
@@ -31,10 +36,15 @@ export interface JwtPayload {
 
 @Injectable()
 export class AuthService {
+  private readonly logger = new Logger(AuthService.name);
+
   constructor(
     private readonly usersService: UsersService,
     private readonly refreshTokensService: RefreshTokensService,
+    private readonly passwordResetTokensService: PasswordResetTokensService,
+    private readonly mailService: MailService,
     private readonly jwtService: JwtService,
+    private readonly configService: ConfigService,
   ) {}
 
   async login(email: string, password: string): Promise<LoginResponse> {
@@ -102,6 +112,51 @@ export class AuthService {
     if (stored) {
       await this.refreshTokensService.revoke(stored.id);
     }
+  }
+
+  // Always resolves without revealing whether the email exists (no account
+  // enumeration). The mail goes out after the response — its latency must
+  // not leak the difference either.
+  async forgotPassword(email: string): Promise<void> {
+    const user = await this.usersService.findByEmail(email);
+    if (!user) {
+      return;
+    }
+
+    const token = await this.passwordResetTokensService.issue(user.id);
+    const baseUrl =
+      this.configService.get<string>('APP_BASE_URL') ?? 'http://localhost:4200';
+    const resetUrl = `${baseUrl}/reset-password?token=${token}`;
+
+    // Deliberately not awaited: SMTP latency on known emails would leak
+    // account existence through response timing. Failures only get logged.
+    this.mailService
+      .send({
+        to: user.email,
+        subject: 'Reset your password',
+        text:
+          `Someone requested a password reset for this account.\n\n` +
+          `Reset your password (link valid for 1 hour):\n${resetUrl}\n\n` +
+          `If this wasn't you, ignore this mail — your password is unchanged.`,
+      })
+      .catch((error) =>
+        this.logger.error(`Password reset mail to ${user.email} failed`, error),
+      );
+  }
+
+  async resetPassword(token: string, password: string): Promise<void> {
+    const stored = await this.passwordResetTokensService.findValid(token);
+    if (!stored) {
+      throw new BadRequestException('Invalid or expired reset token');
+    }
+
+    await this.usersService.updatePassword(
+      stored.user_id,
+      hashPassword(password),
+    );
+    await this.passwordResetTokensService.markUsed(stored.id);
+    // The password may have leaked — kill all existing sessions.
+    await this.refreshTokensService.revokeAllForUser(stored.user_id);
   }
 
   private async issueTokenPair(user: AuthUser): Promise<LoginResponse> {

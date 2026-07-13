@@ -66,12 +66,53 @@ export class EnvironmentVariables {
   @IsInt()
   @Min(1)
   REFRESH_TOKEN_TTL_DAYS?: number;
+
+  // Public base URL of the frontend, used in links inside outgoing mails
+  // (default: http://localhost:4200). In production: https://<DOMAIN>.
+  @IsOptional()
+  @IsString()
+  APP_BASE_URL?: string;
+
+  // SMTP — all optional. Without SMTP_HOST outgoing mail is logged instead
+  // of sent (fine for dev; a warning is emitted in production).
+  @IsOptional()
+  @IsString()
+  SMTP_HOST?: string;
+
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  @Max(65535)
+  SMTP_PORT?: number;
+
+  @IsOptional()
+  @IsString()
+  SMTP_USER?: string;
+
+  @IsOptional()
+  @IsString()
+  SMTP_PASSWORD?: string;
+
+  // 'true' = implicit TLS (port 465); leave unset for STARTTLS on 587.
+  // Deliberately a string: implicit conversion would turn "false" into true.
+  @IsOptional()
+  @IsIn(['true', 'false'])
+  SMTP_SECURE?: string;
+
+  @IsOptional()
+  @IsString()
+  MAIL_FROM?: string;
 }
 
 export function validateEnv(
   config: Record<string, unknown>,
 ): EnvironmentVariables {
-  const validated = plainToInstance(EnvironmentVariables, config, {
+  // Compose passes unset optionals as empty strings (`${SMTP_PORT:-}`);
+  // treat those as absent so @IsOptional applies instead of type checks.
+  const withoutEmpty = Object.fromEntries(
+    Object.entries(config).filter(([, value]) => value !== ''),
+  );
+  const validated = plainToInstance(EnvironmentVariables, withoutEmpty, {
     enableImplicitConversion: true,
   });
   const errors = validateSync(validated, { skipMissingProperties: false });

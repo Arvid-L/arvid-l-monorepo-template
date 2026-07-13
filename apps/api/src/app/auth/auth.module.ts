@@ -1,15 +1,18 @@
 import { Module } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtModule } from '@nestjs/jwt';
+import { MailModule } from '../mail/mail.module';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { UsersService } from './users.service';
 import { RefreshTokensService } from './refresh-tokens.service';
+import { PasswordResetTokensService } from './password-reset-tokens.service';
 import { JwtAuthGuard } from './jwt-auth.guard';
 import { RolesGuard } from './roles.guard';
 
 @Module({
   imports: [
+    MailModule,
     JwtModule.registerAsync({
       inject: [ConfigService],
       useFactory: (config: ConfigService) => ({
@@ -25,6 +28,7 @@ import { RolesGuard } from './roles.guard';
     AuthService,
     UsersService,
     RefreshTokensService,
+    PasswordResetTokensService,
     JwtAuthGuard,
     RolesGuard,
   ],

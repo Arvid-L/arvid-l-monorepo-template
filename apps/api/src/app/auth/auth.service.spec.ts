@@ -1,20 +1,33 @@
 import { Test } from '@nestjs/testing';
 import { JwtModule } from '@nestjs/jwt';
-import { ConflictException, UnauthorizedException } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import {
+  BadRequestException,
+  ConflictException,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { UserRole } from '@arvid-l-monorepo-template/shared';
 import { AuthService } from './auth.service';
 import { UsersService } from './users.service';
 import { RefreshTokensService } from './refresh-tokens.service';
-import { hashPassword } from './password.util';
+import { PasswordResetTokensService } from './password-reset-tokens.service';
+import { MailService } from '../mail/mail.service';
+import { hashPassword, verifyPassword } from './password.util';
 
 describe('AuthService', () => {
   let service: AuthService;
   const findByEmail = jest.fn();
   const findById = jest.fn();
   const create = jest.fn();
+  const updatePassword = jest.fn();
   const issue = jest.fn();
   const findValid = jest.fn();
   const revoke = jest.fn();
+  const revokeAllForUser = jest.fn();
+  const issueReset = jest.fn();
+  const findValidReset = jest.fn();
+  const markUsed = jest.fn();
+  const sendMail = jest.fn();
 
   const storedUser = {
     id: 'user-1',
@@ -28,11 +41,24 @@ describe('AuthService', () => {
       imports: [JwtModule.register({ secret: 'test-secret-not-production' })],
       providers: [
         AuthService,
-        { provide: UsersService, useValue: { findByEmail, findById, create } },
+        {
+          provide: UsersService,
+          useValue: { findByEmail, findById, create, updatePassword },
+        },
         {
           provide: RefreshTokensService,
-          useValue: { issue, findValid, revoke },
+          useValue: { issue, findValid, revoke, revokeAllForUser },
         },
+        {
+          provide: PasswordResetTokensService,
+          useValue: {
+            issue: issueReset,
+            findValid: findValidReset,
+            markUsed,
+          },
+        },
+        { provide: MailService, useValue: { send: sendMail } },
+        { provide: ConfigService, useValue: { get: () => undefined } },
       ],
     }).compile();
 
@@ -146,6 +172,60 @@ describe('AuthService', () => {
         UnauthorizedException,
       );
       expect(revoke).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('forgotPassword', () => {
+    it('issues a token and mails a reset link for a known email', async () => {
+      findByEmail.mockResolvedValue(storedUser);
+      issueReset.mockResolvedValue('reset-token-123');
+      sendMail.mockResolvedValue(undefined);
+
+      await service.forgotPassword('admin@example.org');
+
+      expect(issueReset).toHaveBeenCalledWith('user-1');
+      expect(sendMail).toHaveBeenCalledWith(
+        expect.objectContaining({
+          to: 'admin@example.org',
+          text: expect.stringContaining(
+            '/reset-password?token=reset-token-123',
+          ),
+        }),
+      );
+    });
+
+    it('resolves silently for unknown emails (no enumeration)', async () => {
+      findByEmail.mockResolvedValue(undefined);
+
+      await expect(
+        service.forgotPassword('nobody@example.org'),
+      ).resolves.toBeUndefined();
+      expect(issueReset).not.toHaveBeenCalled();
+      expect(sendMail).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('resetPassword', () => {
+    it('updates the password, burns the token, revokes all sessions', async () => {
+      findValidReset.mockResolvedValue({ id: 'prt-1', user_id: 'user-1' });
+
+      await service.resetPassword('valid-token', 'new-password-123');
+
+      const [userId, newHash] = updatePassword.mock.calls[0];
+      expect(userId).toBe('user-1');
+      expect(verifyPassword('new-password-123', newHash)).toBe(true);
+      expect(markUsed).toHaveBeenCalledWith('prt-1');
+      expect(revokeAllForUser).toHaveBeenCalledWith('user-1');
+    });
+
+    it('rejects invalid, expired or used tokens', async () => {
+      findValidReset.mockResolvedValue(undefined);
+
+      await expect(
+        service.resetPassword('bad-token', 'new-password-123'),
+      ).rejects.toBeInstanceOf(BadRequestException);
+      expect(updatePassword).not.toHaveBeenCalled();
+      expect(revokeAllForUser).not.toHaveBeenCalled();
     });
   });
 
