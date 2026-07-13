@@ -1,0 +1,29 @@
+// Shared layout for all auth pages (login, register, forgot/reset password)
+.auth-page {
+  display: flex;
+  justify-content: center;
+  padding: 4rem 1rem;
+}
+
+.auth-card {
+  width: 100%;
+  max-width: 24rem;
+}
+
+.auth-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-top: 1rem;
+
+  button[type='submit'] {
+    margin-top: 0.5rem;
+  }
+}
+
+.auth-links {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 1rem;
+  font-size: 0.875rem;
+}

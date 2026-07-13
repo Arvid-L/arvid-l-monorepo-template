@@ -1,3 +1,12 @@
-<h1>Arvid L Monorepo Frontend App</h1>
+<mat-toolbar class="app-toolbar">
+  <a class="app-title" [routerLink]="['/']">Arvid L Monorepo</a>
+  <span class="toolbar-spacer"></span>
+  @if (auth.isLoggedIn()) {
+    <span class="user-email">{{ auth.currentUser()?.email }}</span>
+    <button mat-button (click)="auth.logout()">Logout</button>
+  } @else {
+    <a mat-button [routerLink]="['/', ROUTES.LOGIN]">Login</a>
+  }
+</mat-toolbar>
 
 <router-outlet></router-outlet>

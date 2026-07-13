@@ -1,0 +1,43 @@
+<div class="auth-page">
+  <mat-card class="auth-card">
+    <mat-card-header>
+      <mat-card-title>Login</mat-card-title>
+    </mat-card-header>
+    <mat-card-content>
+      <form class="auth-form" [formGroup]="form" (ngSubmit)="onSubmit()">
+        <mat-form-field appearance="outline">
+          <mat-label>Email</mat-label>
+          <input matInput type="email" formControlName="email" />
+          @if (form.get('email')?.hasError('required')) {
+            <mat-error>Email is required</mat-error>
+          }
+          @if (form.get('email')?.hasError('email')) {
+            <mat-error>Enter a valid email</mat-error>
+          }
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Password</mat-label>
+          <input matInput type="password" formControlName="password" />
+          @if (form.get('password')?.hasError('required')) {
+            <mat-error>Password is required</mat-error>
+          }
+        </mat-form-field>
+
+        <button
+          mat-raised-button
+          color="primary"
+          type="submit"
+          [disabled]="!form.valid || submitting()"
+        >
+          Login
+        </button>
+      </form>
+
+      <div class="auth-links">
+        <a [routerLink]="['/', ROUTES.FORGOT_PASSWORD]">Forgot password?</a>
+        <a [routerLink]="['/', ROUTES.REGISTER]">Create account</a>
+      </div>
+    </mat-card-content>
+  </mat-card>
+</div>

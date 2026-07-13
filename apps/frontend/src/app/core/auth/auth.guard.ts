@@ -1,12 +1,18 @@
 import { inject } from '@angular/core';
 import { CanActivateFn, Router } from '@angular/router';
+import { ROUTES } from '../constants/routes.constants';
 import { TokenStorageService } from './token-storage.service';
 
-// Route guard stub: attach to protected routes via canActivate: [authGuard].
-// Adjust the redirect target once the project has a login page.
-export const authGuard: CanActivateFn = () => {
+// Attach to protected routes via canActivate: [authGuard]. Checks token
+// presence only (fast, synchronous) — an expired token still 401s on the
+// first API call and goes through the interceptor's silent refresh.
+export const authGuard: CanActivateFn = (_route, state) => {
   const tokenStorage = inject(TokenStorageService);
   const router = inject(Router);
 
-  return tokenStorage.isLoggedIn ? true : router.parseUrl('/');
+  return tokenStorage.isLoggedIn
+    ? true
+    : router.createUrlTree([ROUTES.LOGIN], {
+        queryParams: { returnUrl: state.url },
+      });
 };

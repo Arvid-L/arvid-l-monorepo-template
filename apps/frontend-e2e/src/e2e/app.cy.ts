@@ -5,7 +5,7 @@ describe('frontend-e2e', () => {
   });
 
   it('displays the app title and the example feature', () => {
-    cy.contains('h1', 'Arvid L Monorepo Frontend App').should('be.visible');
+    cy.contains('.app-title', 'Arvid L Monorepo').should('be.visible');
     cy.contains('h1', 'Examples').should('be.visible');
     cy.contains('mat-card-title', 'Add New Example').should('be.visible');
   });

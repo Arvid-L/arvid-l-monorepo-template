@@ -2,8 +2,11 @@ import { HttpClient } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import {
   AuthUser,
+  ForgotPasswordDto,
   LoginDto,
   LoginResponse,
+  RegisterDto,
+  ResetPasswordDto,
 } from '@arvid-l-monorepo-template/shared';
 import { finalize, Observable, shareReplay, tap } from 'rxjs';
 import { environment } from '../../environments/environment';
@@ -25,6 +28,20 @@ export class AuthApiService {
     return this.http
       .post<LoginResponse>(`${this.apiUrl}/login`, credentials)
       .pipe(tap((response) => this.storeTokens(response)));
+  }
+
+  register(data: RegisterDto): Observable<LoginResponse> {
+    return this.http
+      .post<LoginResponse>(`${this.apiUrl}/register`, data)
+      .pipe(tap((response) => this.storeTokens(response)));
+  }
+
+  forgotPassword(data: ForgotPasswordDto): Observable<void> {
+    return this.http.post<void>(`${this.apiUrl}/forgot-password`, data);
+  }
+
+  resetPassword(data: ResetPasswordDto): Observable<void> {
+    return this.http.post<void>(`${this.apiUrl}/reset-password`, data);
   }
 
   refresh(): Observable<LoginResponse> {
