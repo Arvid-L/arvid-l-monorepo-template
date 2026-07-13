@@ -31,9 +31,17 @@ export class TokenCleanupService {
       )
       .executeTakeFirst();
 
+    const verification = await this.db
+      .deleteFrom('email_verification_tokens')
+      .where((eb) =>
+        eb.or([eb('expires_at', '<', now), eb('used_at', 'is not', null)]),
+      )
+      .executeTakeFirst();
+
     this.logger.log(
       `Purged ${refresh.numDeletedRows} stale refresh tokens, ` +
-        `${reset.numDeletedRows} stale password reset tokens`,
+        `${reset.numDeletedRows} stale password reset tokens, ` +
+        `${verification.numDeletedRows} stale email verification tokens`,
     );
   }
 }

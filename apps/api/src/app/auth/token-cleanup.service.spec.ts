@@ -22,11 +22,12 @@ describe('TokenCleanupService', () => {
     service = module.get(TokenCleanupService);
   });
 
-  it('purges both token tables', async () => {
+  it('purges all three token tables', async () => {
     await service.purgeStaleTokens();
 
     expect(deleteFrom).toHaveBeenCalledWith('refresh_tokens');
     expect(deleteFrom).toHaveBeenCalledWith('password_reset_tokens');
+    expect(deleteFrom).toHaveBeenCalledWith('email_verification_tokens');
   });
 
   it('is registered as a daily cron', () => {
