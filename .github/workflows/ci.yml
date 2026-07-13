@@ -25,4 +25,11 @@ jobs:
 
       - uses: nrwl/nx-set-shas@v4
 
-      - run: npx nx affected -t lint test build
+      # PRs: only affected projects. Pushes to main: everything — cheap at
+      # this size and a fresh repo has no base commit for affected to diff.
+      - run: |
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            npx nx affected -t lint test build
+          else
+            npx nx run-many -t lint test build
+          fi
