@@ -1,0 +1,35 @@
+<div class="auth-page">
+  <mat-card class="auth-card">
+    <mat-card-content>
+      @if (status() === 'verifying') {
+        <h1>Verifying…</h1>
+        <p>Checking your verification link.</p>
+      } @else {
+        <h1>Link invalid or expired</h1>
+        @if (!resendRequested()) {
+          <p>Request a fresh verification mail:</p>
+          <form
+            class="auth-form"
+            [formGroup]="resendForm"
+            (ngSubmit)="resend()"
+          >
+            <mat-form-field appearance="outline">
+              <mat-label>Email</mat-label>
+              <input matInput type="email" formControlName="email" />
+            </mat-form-field>
+            <button mat-flat-button color="primary" type="submit">
+              Resend verification mail
+            </button>
+          </form>
+        } @else {
+          <p>
+            If that address has an unverified account, a mail is on its way.
+          </p>
+        }
+        <div class="auth-links">
+          <a [routerLink]="['/', ROUTES.LOGIN]">Back to login</a>
+        </div>
+      }
+    </mat-card-content>
+  </mat-card>
+</div>

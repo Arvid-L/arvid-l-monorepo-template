@@ -5,6 +5,7 @@ import {
   LoginComponent,
   RegisterComponent,
   ResetPasswordComponent,
+  VerifyEmailComponent,
 } from './components/auth';
 import { ROUTES } from './core/constants/routes.constants';
 
@@ -30,6 +31,11 @@ export const appRoutes: Route[] = [
   {
     path: ROUTES.RESET_PASSWORD,
     component: ResetPasswordComponent,
+  },
+  {
+    // Public on purpose — the mail link must work logged-out.
+    path: ROUTES.VERIFY_EMAIL,
+    component: VerifyEmailComponent,
   },
   {
     path: '**',

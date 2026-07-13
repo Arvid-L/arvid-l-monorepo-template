@@ -6,4 +6,7 @@ export const ROUTES = {
   // Keep in sync with the link in the API's password reset mail
   // (AuthService.forgotPassword: APP_BASE_URL/reset-password?token=...)
   RESET_PASSWORD: 'reset-password',
+  // Keep in sync with the link in the API's verification mail
+  // (AuthService.sendVerificationMail: APP_BASE_URL/verify-email?token=...)
+  VERIFY_EMAIL: 'verify-email',
 };
