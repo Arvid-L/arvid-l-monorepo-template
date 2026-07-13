@@ -83,11 +83,17 @@ For "branch off and go fast," the biggest friction is renaming everything. Add:
 
 ## P2 — Nice-to-have
 
-- [ ] Auth scaffold (JWT module + guard + `@CurrentUser` decorator + FE auth interceptor/guard stub) — optional, many projects need it.
-- [ ] Rate limiting (`@nestjs/throttler`).
-- [ ] Renovate/Dependabot config.
-- [ ] `nx release` / conventional-commits + changelog.
-- [ ] Coverage thresholds in jest config.
+- [x] **Auth scaffold** (2026-07-13, verified live) — vertical slice, opt-in by design: `users` migration + scrypt hashing (node crypto, no native deps), `@nestjs/jwt` without passport, `POST /auth/login` + protected `GET /auth/me` (the pattern to copy), `JwtAuthGuard` + `@CurrentUser`, shared `LoginDto`/`LoginResponse`/`AuthUser`, FE token storage + Bearer interceptor + `authGuard` stub (no login UI — project-specific). Users are created via `npm run user:create -- <email> <password>` — deliberately no open registration endpoint. `JWT_SECRET` env-validated (min 16 chars). To secure the whole API: register `JwtAuthGuard` as `APP_GUARD` + add a `@Public()` decorator.
+
+### Roadmap — remaining, in recommended order
+
+1. **Rate limiting** — `@nestjs/throttler`, generous global default + strict override on `/auth/login` (brute-force protection). ~30 min.
+2. **Dependabot** — `.github/dependabot.yml` (npm weekly + github-actions). Native, zero infra; pick Renovate instead only if grouped-update PRs become annoying. ~15 min.
+3. **Jest coverage thresholds** — modest global floor (~60%) to stop silent decay. ~15 min.
+4. **Refresh tokens / logout-invalidation** — only when a project actually keeps users logged in long-term; scaffold's 1d access token is fine for admin-style use.
+5. **FE runtime config** (one build serves all envs) — only when a project gets a second deployed environment.
+6. **GHCR image-push workflow** — only if the deploy model changes from build-on-server to pull-prebuilt-images (needed at >1 server or slow-build pain).
+7. **`nx release` + changelog / coverage badges** — only if the template itself gets versioned releases.
 
 ---
 
