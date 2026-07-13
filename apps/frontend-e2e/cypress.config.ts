@@ -5,7 +5,13 @@ export default defineConfig({
     ...nxE2EPreset(__filename, {
       cypressDir: 'src',
       webServerCommands: {
-        default: 'nx run api:serve & nx run frontend:serve:e2e',
+        // Cypress only waits for the FE port (baseUrl), so the FE must not
+        // come up before the API is ready — otherwise the first spec races
+        // a still-booting API and fails on its first real request.
+        default:
+          'nx run api:serve & ' +
+          'until curl -sf http://localhost:3000/api/health > /dev/null; do sleep 1; done; ' +
+          'nx run frontend:serve:e2e',
         production: 'npx nx run frontend:serve-static',
       },
       ciWebServerCommand: 'npx nx run frontend:serve-static',
