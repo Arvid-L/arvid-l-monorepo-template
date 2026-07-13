@@ -11,6 +11,7 @@ import { Throttle } from '@nestjs/throttler';
 import {
   AuthUser,
   LoginResponse,
+  RegisterResponse,
   UserRole,
 } from '@arvid-l-monorepo-template/shared';
 import { AuthService, JwtPayload } from './auth.service';
@@ -24,6 +25,8 @@ import { RegisterDto } from './dto/register.dto';
 import { RefreshDto } from './dto/refresh.dto';
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
+import { VerifyEmailDto } from './dto/verify-email.dto';
+import { ResendVerificationDto } from './dto/resend-verification.dto';
 
 // Credential endpoints get a strict rate limit on top of the global one
 // (brute-force protection).
@@ -38,7 +41,7 @@ export class AuthController {
 
   @Post('register')
   @Throttle(CREDENTIAL_THROTTLE)
-  async register(@Body() registerDto: RegisterDto): Promise<LoginResponse> {
+  async register(@Body() registerDto: RegisterDto): Promise<RegisterResponse> {
     return this.authService.register(registerDto.email, registerDto.password);
   }
 
@@ -75,6 +78,21 @@ export class AuthController {
   @Throttle(CREDENTIAL_THROTTLE)
   async resetPassword(@Body() dto: ResetPasswordDto): Promise<void> {
     await this.authService.resetPassword(dto.token, dto.password);
+  }
+
+  @Post('verify-email')
+  @HttpCode(HttpStatus.OK)
+  @Throttle(CREDENTIAL_THROTTLE)
+  async verifyEmail(@Body() dto: VerifyEmailDto): Promise<LoginResponse> {
+    return this.authService.verifyEmail(dto.token);
+  }
+
+  // Always 204, whether or not the email exists (no account enumeration).
+  @Post('resend-verification')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @Throttle(CREDENTIAL_THROTTLE)
+  async resendVerification(@Body() dto: ResendVerificationDto): Promise<void> {
+    await this.authService.resendVerification(dto.email);
   }
 
   // Protected example — the pattern to copy for any secured endpoint.

@@ -11,6 +11,7 @@ import { AuthService } from './auth.service';
 import { UsersService } from './users.service';
 import { RefreshTokensService } from './refresh-tokens.service';
 import { PasswordResetTokensService } from './password-reset-tokens.service';
+import { EmailVerificationTokensService } from './email-verification-tokens.service';
 import { MailService } from '../mail/mail.service';
 import { hashPassword, verifyPassword } from './password.util';
 
@@ -20,6 +21,7 @@ describe('AuthService', () => {
   const findById = jest.fn();
   const create = jest.fn();
   const updatePassword = jest.fn();
+  const markEmailVerified = jest.fn();
   const issue = jest.fn();
   const findValid = jest.fn();
   const revoke = jest.fn();
@@ -27,6 +29,9 @@ describe('AuthService', () => {
   const issueReset = jest.fn();
   const findValidReset = jest.fn();
   const markUsed = jest.fn();
+  const issueVerification = jest.fn();
+  const findValidVerification = jest.fn();
+  const markUsedVerification = jest.fn();
   const sendMail = jest.fn();
 
   const storedUser = {
@@ -34,6 +39,7 @@ describe('AuthService', () => {
     email: 'admin@example.org',
     password_hash: hashPassword('secret-password'),
     role: UserRole.ADMIN,
+    email_verified_at: new Date().toISOString(),
   };
 
   beforeAll(async () => {
@@ -43,7 +49,13 @@ describe('AuthService', () => {
         AuthService,
         {
           provide: UsersService,
-          useValue: { findByEmail, findById, create, updatePassword },
+          useValue: {
+            findByEmail,
+            findById,
+            create,
+            updatePassword,
+            markEmailVerified,
+          },
         },
         {
           provide: RefreshTokensService,
@@ -55,6 +67,14 @@ describe('AuthService', () => {
             issue: issueReset,
             findValid: findValidReset,
             markUsed,
+          },
+        },
+        {
+          provide: EmailVerificationTokensService,
+          useValue: {
+            issue: issueVerification,
+            findValid: findValidVerification,
+            markUsed: markUsedVerification,
           },
         },
         { provide: MailService, useValue: { send: sendMail } },
@@ -104,28 +124,43 @@ describe('AuthService', () => {
         service.login('nobody@example.org', 'whatever'),
       ).rejects.toBeInstanceOf(UnauthorizedException);
     });
+
+    it('rejects unverified users with EMAIL_NOT_VERIFIED', async () => {
+      findByEmail.mockResolvedValue({ ...storedUser, email_verified_at: null });
+
+      await expect(
+        service.login('admin@example.org', 'secret-password'),
+      ).rejects.toMatchObject({
+        response: expect.objectContaining({ code: 'EMAIL_NOT_VERIFIED' }),
+      });
+      expect(issue).not.toHaveBeenCalled();
+    });
   });
 
   describe('register', () => {
-    it('creates the user and returns a token pair', async () => {
-      create.mockResolvedValue({
-        id: 'user-2',
-        email: 'new@example.org',
-        role: UserRole.USER,
-      });
+    it('creates the user unverified, sends a verification mail, returns no tokens', async () => {
+      create.mockResolvedValue({ ...storedUser, email_verified_at: null });
+      issueVerification.mockResolvedValue('raw-verification-token');
+      sendMail.mockResolvedValue(undefined);
 
-      const result = await service.register('new@example.org', 'password123');
+      const result = await service.register('new@example.org', 'password-123');
 
       expect(create).toHaveBeenCalledWith(
         'new@example.org',
         expect.stringMatching(/^scrypt\$/),
       );
-      expect(result.accessToken.split('.')).toHaveLength(3);
-      expect(result.user).toEqual({
-        id: 'user-2',
-        email: 'new@example.org',
-        role: UserRole.USER,
-      });
+      expect(result).toEqual({ message: expect.any(String) });
+      expect(issueVerification).toHaveBeenCalledWith(storedUser.id);
+      expect(sendMail).toHaveBeenCalledWith(
+        expect.objectContaining({
+          to: storedUser.email,
+          subject: expect.stringContaining('Verify'),
+          text: expect.stringContaining(
+            '/verify-email?token=raw-verification-token',
+          ),
+        }),
+      );
+      expect(issue).not.toHaveBeenCalled(); // no refresh token pair
     });
 
     it('maps a duplicate email (unique violation) to 409', async () => {
@@ -226,6 +261,67 @@ describe('AuthService', () => {
       ).rejects.toBeInstanceOf(BadRequestException);
       expect(updatePassword).not.toHaveBeenCalled();
       expect(revokeAllForUser).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('verifyEmail', () => {
+    it('marks user verified, consumes the token, returns a login response', async () => {
+      findValidVerification.mockResolvedValue({
+        id: 'evt-1',
+        user_id: storedUser.id,
+      });
+      findById.mockResolvedValue(storedUser);
+
+      const result = await service.verifyEmail('raw-token');
+
+      expect(markEmailVerified).toHaveBeenCalledWith(storedUser.id);
+      expect(markUsedVerification).toHaveBeenCalledWith('evt-1');
+      expect(result.user.email).toBe(storedUser.email);
+      expect(result.accessToken).toBeDefined();
+    });
+
+    it('rejects an invalid token', async () => {
+      findValidVerification.mockResolvedValue(undefined);
+      await expect(service.verifyEmail('bad')).rejects.toBeInstanceOf(
+        BadRequestException,
+      );
+    });
+  });
+
+  describe('resendVerification', () => {
+    it('resolves silently for unknown emails', async () => {
+      findByEmail.mockResolvedValue(undefined);
+      await expect(
+        service.resendVerification('ghost@example.org'),
+      ).resolves.toBeUndefined();
+      expect(issueVerification).not.toHaveBeenCalled();
+    });
+
+    it('resolves silently for already-verified users', async () => {
+      findByEmail.mockResolvedValue(storedUser); // has email_verified_at
+      await service.resendVerification(storedUser.email);
+      expect(issueVerification).not.toHaveBeenCalled();
+    });
+
+    it('reissues and mails for unverified users', async () => {
+      findByEmail.mockResolvedValue({ ...storedUser, email_verified_at: null });
+      issueVerification.mockResolvedValue('fresh-token');
+      sendMail.mockResolvedValue(undefined);
+
+      await service.resendVerification(storedUser.email);
+
+      expect(sendMail).toHaveBeenCalledWith(
+        expect.objectContaining({ to: storedUser.email }),
+      );
+    });
+
+    it('skips the mail when rate-limited (issue returns null)', async () => {
+      findByEmail.mockResolvedValue({ ...storedUser, email_verified_at: null });
+      issueVerification.mockResolvedValue(null);
+
+      await service.resendVerification(storedUser.email);
+
+      expect(sendMail).not.toHaveBeenCalled();
     });
   });
 

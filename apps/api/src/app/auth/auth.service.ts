@@ -1,6 +1,7 @@
 import {
   BadRequestException,
   ConflictException,
+  ForbiddenException,
   Injectable,
   Logger,
   UnauthorizedException,
@@ -9,13 +10,16 @@ import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import {
   AuthUser,
+  ErrorCode,
   LoginResponse,
+  RegisterResponse,
   UserRole,
 } from '@arvid-l-monorepo-template/shared';
 import { MailService } from '../mail/mail.service';
 import { UsersService } from './users.service';
 import { RefreshTokensService } from './refresh-tokens.service';
 import { PasswordResetTokensService } from './password-reset-tokens.service';
+import { EmailVerificationTokensService } from './email-verification-tokens.service';
 import { hashPassword, verifyPassword } from './password.util';
 
 const PG_UNIQUE_VIOLATION = '23505';
@@ -42,6 +46,7 @@ export class AuthService {
     private readonly usersService: UsersService,
     private readonly refreshTokensService: RefreshTokensService,
     private readonly passwordResetTokensService: PasswordResetTokensService,
+    private readonly emailVerificationTokensService: EmailVerificationTokensService,
     private readonly mailService: MailService,
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService,
@@ -54,6 +59,16 @@ export class AuthService {
       throw new UnauthorizedException('Invalid credentials');
     }
 
+    // Hard gate: unverified accounts cannot log in. Distinct code so the FE
+    // can offer "resend verification mail" instead of a generic error.
+    if (!user.email_verified_at) {
+      throw new ForbiddenException({
+        statusCode: 403,
+        code: ErrorCode.EMAIL_NOT_VERIFIED,
+        message: 'Please verify your email address first',
+      });
+    }
+
     return this.issueTokenPair({
       id: user.id,
       email: user.email,
@@ -61,20 +76,18 @@ export class AuthService {
     });
   }
 
-  // Open registration — every new account gets the USER role; admins and
-  // moderators are promoted via `npm run user:create -- <email> <pw> <role>`
-  // or a future admin UI.
-  async register(email: string, password: string): Promise<LoginResponse> {
+  // Open registration — every new account gets the USER role and starts
+  // unverified: no tokens until the mailed link is clicked (hard gate).
+  // Admins and moderators are promoted via
+  // `npm run user:create -- <email> <pw> <role>` or a future admin UI.
+  async register(email: string, password: string): Promise<RegisterResponse> {
     try {
       const user = await this.usersService.create(
         email,
         hashPassword(password),
       );
-      return await this.issueTokenPair({
-        id: user.id,
-        email: user.email,
-        role: user.role,
-      });
+      await this.sendVerificationMail(user.id, user.email);
+      return { message: 'Check your inbox to verify your email address' };
     } catch (error) {
       // Race-safe duplicate check: rely on the unique index instead of a
       // separate SELECT beforehand.
@@ -83,6 +96,67 @@ export class AuthService {
       }
       throw error;
     }
+  }
+
+  async verifyEmail(token: string): Promise<LoginResponse> {
+    const stored = await this.emailVerificationTokensService.findValid(token);
+    if (!stored) {
+      throw new BadRequestException('Invalid or expired verification token');
+    }
+
+    const user = await this.usersService.findById(stored.user_id);
+    if (!user) {
+      throw new BadRequestException('Invalid or expired verification token');
+    }
+
+    await this.usersService.markEmailVerified(user.id);
+    await this.emailVerificationTokensService.markUsed(stored.id);
+
+    // Clicking the mail link logs the user straight in.
+    return this.issueTokenPair({
+      id: user.id,
+      email: user.email,
+      role: user.role,
+    });
+  }
+
+  // Same no-enumeration contract as forgotPassword: always resolves.
+  async resendVerification(email: string): Promise<void> {
+    const user = await this.usersService.findByEmail(email);
+    if (!user || user.email_verified_at) {
+      return;
+    }
+    await this.sendVerificationMail(user.id, user.email);
+  }
+
+  private async sendVerificationMail(
+    userId: string,
+    email: string,
+  ): Promise<void> {
+    // null = reissued too soon (rate limit) — stay silent.
+    const token = await this.emailVerificationTokensService.issue(userId);
+    if (!token) {
+      return;
+    }
+
+    const baseUrl =
+      this.configService.get<string>('APP_BASE_URL') ?? 'http://localhost:4200';
+    const verifyUrl = `${baseUrl}/verify-email?token=${token}`;
+
+    // The SMTP call itself must not fail registration/resend — failures
+    // only get logged (link stays retrievable via resend).
+    await this.mailService
+      .send({
+        to: email,
+        subject: 'Verify your email address',
+        text:
+          `Welcome! Confirm this email address to activate your account.\n\n` +
+          `Verify your email (link valid for 24 hours):\n${verifyUrl}\n\n` +
+          `If you didn't create this account, ignore this mail.`,
+      })
+      .catch((error) =>
+        this.logger.error(`Verification mail to ${email} failed`, error),
+      );
   }
 
   // Rotation: every refresh revokes the used token and issues a new pair,
