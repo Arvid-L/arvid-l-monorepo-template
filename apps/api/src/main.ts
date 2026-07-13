@@ -5,14 +5,18 @@ import { NestFactory } from '@nestjs/core';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import helmet from 'helmet';
+import { Logger as PinoLogger } from 'nestjs-pino';
 import { AppModule } from './app/app.module';
 import { HttpExceptionFilter } from './common/filters/http-exception.filter';
 import { runMigrations } from './database/migrator';
 
 async function bootstrap() {
-  const app = await NestFactory.create<NestExpressApplication>(AppModule);
+  // bufferLogs: hold startup logs until pino replaces the default logger
+  const app = await NestFactory.create<NestExpressApplication>(AppModule, {
+    bufferLogs: true,
+  });
   const globalPrefix = 'api';
-  const logger = app.get(Logger);
+  app.useLogger(app.get(PinoLogger));
 
   // Behind the edge nginx: derive client IPs from X-Forwarded-For so
   // rate limiting applies per client, not per proxy.
@@ -21,8 +25,6 @@ async function bootstrap() {
   await runMigrations();
 
   const isProduction = process.env.NODE_ENV === 'production';
-
-  app.useLogger(logger);
   app.use(
     helmet({
       // CSP would break the Swagger UI, which only exists outside production
