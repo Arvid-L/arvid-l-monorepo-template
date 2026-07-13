@@ -1,6 +1,8 @@
 # ArvidLMonorepoTemplate
 
 Monorepo Base Structure for my future projects.
+**Start here: [docs/OVERVIEW.md](docs/OVERVIEW.md)** — what's included, how to
+use it, what's deliberately missing (5-minute read).
 
 ## Start a new project
 
@@ -13,11 +15,10 @@ npm run init-project -- my-project --reset-git
 Then follow [docs/NEW-PROJECT.md](docs/NEW-PROJECT.md) — the complete path
 from branch-off to the app running on your domain with HTTPS.
 
-
 ## Stack
 
 - Backend: NestJS 11
-- Frontend: Angular 
+- Frontend: Angular
 - Typescript
 
 ## nx projects
@@ -25,7 +26,6 @@ from branch-off to the app running on your domain with HTTPS.
 - apps/api
 - apps/frontend
 - libs/shared
-
 
 ## How to run
 
@@ -70,5 +70,3 @@ frontend behind an nginx edge proxy with Let's Encrypt TLS.
 
 Migrations run automatically on API boot. Secrets live only in
 `.env.production` (gitignored, scp'd to the server by the deploy script).
-
-
