@@ -17,9 +17,14 @@ export const toPageResponse = <T>(
 
 // Maps a client-provided camelCase sort key to a real column name via an
 // endpoint-owned whitelist. NEVER feed raw client input into orderBy —
-// this is the injection guard.
+// this is the injection guard. Own-property check only: a plain bracket
+// lookup would resolve prototype-chain keys like 'constructor' to
+// non-string values and defeat the guard.
 export const resolveSort = (
   columns: Record<string, string>,
   sort: string | undefined,
   fallback: string,
-): string => (sort && columns[sort]) || fallback;
+): string =>
+  sort && Object.prototype.hasOwnProperty.call(columns, sort)
+    ? columns[sort]
+    : fallback;

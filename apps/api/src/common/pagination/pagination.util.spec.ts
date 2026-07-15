@@ -21,4 +21,11 @@ describe('pagination utils', () => {
     expect(resolveSort(columns, 'evil; drop table', 'name')).toBe('name');
     expect(resolveSort(columns, undefined, 'name')).toBe('name');
   });
+
+  it('ignores prototype-chain keys that are not own whitelist entries', () => {
+    const columns = { createdAt: 'created_at' };
+    expect(resolveSort(columns, 'constructor', 'name')).toBe('name');
+    expect(resolveSort(columns, 'hasOwnProperty', 'name')).toBe('name');
+    expect(resolveSort(columns, 'toString', 'name')).toBe('name');
+  });
 });
