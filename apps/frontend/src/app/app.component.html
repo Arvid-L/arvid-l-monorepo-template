@@ -22,3 +22,8 @@
 </mat-toolbar>
 
 <router-outlet></router-outlet>
+
+<footer class="app-footer">
+  <a [routerLink]="['/', ROUTES.IMPRINT]">{{ 'footer.imprint' | transloco }}</a>
+  <a [routerLink]="['/', ROUTES.PRIVACY]">{{ 'footer.privacy' | transloco }}</a>
+</footer>

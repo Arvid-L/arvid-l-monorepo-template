@@ -9,4 +9,6 @@ export const ROUTES = {
   // Keep in sync with the link in the API's verification mail
   // (AuthService.sendVerificationMail: APP_BASE_URL/verify-email?token=...)
   VERIFY_EMAIL: 'verify-email',
+  IMPRINT: 'imprint',
+  PRIVACY: 'privacy',
 };
