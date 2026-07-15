@@ -12,7 +12,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
-import { TranslocoPipe } from '@jsverse/transloco';
+import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { AuthApiService } from '../../../core/auth/auth.api.service';
 import { ToastService } from '../../../core/services/toast.service';
 import { ROUTES } from '../../../core/constants/routes.constants';
@@ -44,6 +44,7 @@ export class ResetPasswordComponent {
   private readonly authApi = inject(AuthApiService);
   private readonly router = inject(Router);
   private readonly toast = inject(ToastService);
+  private readonly transloco = inject(TranslocoService);
 
   readonly ROUTES = ROUTES;
   readonly submitting = signal(false);
@@ -68,7 +69,7 @@ export class ResetPasswordComponent {
       .resetPassword({ token: this.token, password: this.form.value.password })
       .subscribe({
         next: () => {
-          this.toast.success('Password changed — you can log in now');
+          this.toast.success(this.transloco.translate('auth.reset.changed'));
           this.router.navigate(['/', ROUTES.LOGIN]);
         },
         // errors surface via the global httpErrorInterceptor toast

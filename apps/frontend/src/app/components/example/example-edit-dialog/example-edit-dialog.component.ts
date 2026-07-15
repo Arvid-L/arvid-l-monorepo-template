@@ -14,7 +14,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatInputModule } from '@angular/material/input';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatSelectModule } from '@angular/material/select';
-import { TranslocoPipe } from '@jsverse/transloco';
+import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { Example, ExampleType } from '@arvid-l-monorepo-template/shared';
 import { ExampleApiService } from '../../../core/api/example.api.service';
 import { ToastService } from '../../../core/services/toast.service';
@@ -39,6 +39,7 @@ export class ExampleEditDialogComponent {
   private exampleApiService = inject(ExampleApiService);
   private toast = inject(ToastService);
   private dialogRef = inject(MatDialogRef<ExampleEditDialogComponent>);
+  private transloco = inject(TranslocoService);
 
   public data = inject<Example>(MAT_DIALOG_DATA);
 
@@ -57,7 +58,7 @@ export class ExampleEditDialogComponent {
     if (this.form.valid) {
       this.exampleApiService.update(this.data.id, this.form.value).subscribe({
         next: () => {
-          this.toast.success('Example updated successfully');
+          this.toast.success(this.transloco.translate('example.updated'));
           this.dialogRef.close(true);
         },
         // errors surface via the global httpErrorInterceptor toast

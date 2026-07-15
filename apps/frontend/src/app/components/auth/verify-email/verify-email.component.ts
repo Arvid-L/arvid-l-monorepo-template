@@ -10,7 +10,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
-import { TranslocoPipe } from '@jsverse/transloco';
+import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { AuthService } from '../../../core/auth/auth.service';
 import { AuthApiService } from '../../../core/auth/auth.api.service';
 import { ToastService } from '../../../core/services/toast.service';
@@ -39,6 +39,7 @@ export class VerifyEmailComponent {
   private readonly authApi = inject(AuthApiService);
   private readonly router = inject(Router);
   private readonly toast = inject(ToastService);
+  private readonly transloco = inject(TranslocoService);
 
   readonly ROUTES = ROUTES;
   readonly status = signal<'verifying' | 'error'>('verifying');
@@ -57,7 +58,7 @@ export class VerifyEmailComponent {
     }
     this.auth.verifyEmail(token).subscribe({
       next: () => {
-        this.toast.success('Email verified — welcome!');
+        this.toast.success(this.transloco.translate('auth.verify.verified'));
         this.router.navigate(['/']);
       },
       // errors also surface via the global httpErrorInterceptor toast

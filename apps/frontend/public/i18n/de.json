@@ -55,7 +55,8 @@
       "missingTokenLink": "Passwort vergessen",
       "newPassword": "Neues Passwort",
       "confirmNewPassword": "Neues Passwort bestätigen",
-      "submit": "Neues Passwort setzen"
+      "submit": "Neues Passwort setzen",
+      "changed": "Passwort geändert — du kannst dich jetzt anmelden"
     },
     "verify": {
       "verifyingTitle": "Wird geprüft…",
@@ -63,7 +64,8 @@
       "failedTitle": "Link ungültig oder abgelaufen",
       "resendPrompt": "Fordere eine neue Bestätigungsmail an:",
       "resend": "Bestätigungsmail erneut senden",
-      "resendSent": "Falls diese Adresse ein unbestätigtes Konto hat, ist eine Mail unterwegs."
+      "resendSent": "Falls diese Adresse ein unbestätigtes Konto hat, ist eine Mail unterwegs.",
+      "verified": "E-Mail bestätigt — willkommen!"
     }
   },
   "example": {
@@ -85,7 +87,8 @@
     "confirmDelete": "Dieses Beispiel wirklich löschen?",
     "editTitle": "Beispiel bearbeiten",
     "save": "Speichern",
-    "cancel": "Abbrechen"
+    "cancel": "Abbrechen",
+    "updated": "Beispiel erfolgreich aktualisiert"
   },
   "settings": {
     "title": "Einstellungen",
