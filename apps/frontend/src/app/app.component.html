@@ -1,11 +1,23 @@
 <mat-toolbar class="app-toolbar">
-  <a class="app-title" [routerLink]="['/']">Arvid L Monorepo</a>
+  <a class="app-title" [routerLink]="['/']">{{ 'nav.title' | transloco }}</a>
   <span class="toolbar-spacer"></span>
+  <button
+    mat-button
+    type="button"
+    class="lang-toggle"
+    (click)="language.toggle()"
+  >
+    {{ language.active() === 'en' ? 'DE' : 'EN' }}
+  </button>
   @if (auth.isLoggedIn()) {
     <span class="user-email">{{ auth.currentUser()?.email }}</span>
-    <button mat-button (click)="auth.logout()">Logout</button>
+    <button mat-button (click)="auth.logout()">
+      {{ 'nav.logout' | transloco }}
+    </button>
   } @else {
-    <a mat-button [routerLink]="['/', ROUTES.LOGIN]">Login</a>
+    <a mat-button [routerLink]="['/', ROUTES.LOGIN]">{{
+      'nav.login' | transloco
+    }}</a>
   }
 </mat-toolbar>
 

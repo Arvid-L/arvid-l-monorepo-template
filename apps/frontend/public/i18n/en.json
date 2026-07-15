@@ -1,0 +1,154 @@
+{
+  "nav": {
+    "title": "Arvid L Monorepo",
+    "login": "Login",
+    "logout": "Logout",
+    "settings": "Settings",
+    "users": "Users"
+  },
+  "footer": {
+    "imprint": "Imprint",
+    "privacy": "Privacy policy"
+  },
+  "common": {
+    "email": "Email",
+    "password": "Password",
+    "backToLogin": "Back to login",
+    "emailRequired": "Email is required",
+    "emailInvalid": "Enter a valid email",
+    "passwordRequired": "Password is required",
+    "passwordMinLength": "At least 8 characters",
+    "passwordMismatch": "Passwords do not match"
+  },
+  "auth": {
+    "login": {
+      "title": "Login",
+      "submit": "Login",
+      "unverifiedHint": "This account's email address is not verified yet.",
+      "resend": "Resend verification mail",
+      "resendSent": "A new mail is on its way — check your inbox.",
+      "forgotLink": "Forgot password?",
+      "registerLink": "Create account"
+    },
+    "register": {
+      "title": "Create account",
+      "displayName": "Display name (optional)",
+      "confirmPassword": "Confirm password",
+      "privacyPrefix": "I have read and accept the",
+      "privacyLinkLabel": "privacy policy",
+      "privacyRequired": "You must accept the privacy policy",
+      "submit": "Create account",
+      "loginLink": "Already have an account? Login",
+      "inboxTitle": "Check your inbox",
+      "inboxBody": "We sent a verification link to",
+      "inboxBodySuffix": ". Click it to activate your account.",
+      "resend": "Resend mail"
+    },
+    "forgot": {
+      "title": "Forgot password",
+      "sent": "If an account exists for that email, a password reset link is on its way. The link is valid for one hour.",
+      "submit": "Send reset link"
+    },
+    "reset": {
+      "title": "Reset password",
+      "missingToken": "This link is missing its reset token. Request a new one via",
+      "missingTokenLink": "forgot password",
+      "newPassword": "New password",
+      "confirmNewPassword": "Confirm new password",
+      "submit": "Set new password"
+    },
+    "verify": {
+      "verifyingTitle": "Verifying…",
+      "verifyingBody": "Checking your verification link.",
+      "failedTitle": "Link invalid or expired",
+      "resendPrompt": "Request a fresh verification mail:",
+      "resend": "Resend verification mail",
+      "resendSent": "If that address has an unverified account, a mail is on its way."
+    }
+  },
+  "example": {
+    "title": "Examples",
+    "addTitle": "Add New Example",
+    "name": "Name",
+    "namePlaceholder": "Enter name",
+    "nameRequired": "Name is required",
+    "type": "Type",
+    "typeRequired": "Type is required",
+    "createdAt": "Created At",
+    "actions": "Actions",
+    "add": "Add Example",
+    "edit": "Edit",
+    "delete": "Delete",
+    "noData": "No examples found. Create one above!",
+    "created": "Example created successfully",
+    "deleted": "Example deleted successfully",
+    "confirmDelete": "Are you sure you want to delete this example?"
+  },
+  "settings": {
+    "title": "Settings",
+    "profile": {
+      "title": "Profile",
+      "displayName": "Display name",
+      "save": "Save",
+      "saved": "Profile updated"
+    },
+    "password": {
+      "title": "Change password",
+      "current": "Current password",
+      "currentRequired": "Current password is required",
+      "new": "New password",
+      "confirm": "Confirm new password",
+      "submit": "Change password",
+      "changed": "Password changed — other sessions were logged out"
+    },
+    "email": {
+      "title": "Change email",
+      "new": "New email address",
+      "password": "Current password",
+      "submit": "Send verification mail",
+      "sent": "Verification mail sent to",
+      "sentSuffix": ". Your email changes once you click the link."
+    },
+    "danger": {
+      "title": "Delete account",
+      "body": "Deletes your account and all its data permanently. This cannot be undone.",
+      "password": "Current password",
+      "submit": "Delete my account",
+      "confirm": "Really delete your account? This cannot be undone.",
+      "deleted": "Your account has been deleted"
+    }
+  },
+  "admin": {
+    "users": {
+      "title": "Users",
+      "displayName": "Name",
+      "email": "Email",
+      "role": "Role",
+      "verified": "Verified",
+      "status": "Status",
+      "createdAt": "Created",
+      "active": "Active",
+      "disabled": "Disabled",
+      "disable": "Disable",
+      "enable": "Enable",
+      "roleChanged": "Role updated",
+      "statusChanged": "Status updated",
+      "self": "you"
+    }
+  },
+  "legal": {
+    "imprint": {
+      "title": "Imprint",
+      "body": "Placeholder — replace with your Impressum (§ 5 DDG): name, address, contact, and if applicable registry entries and VAT ID."
+    },
+    "privacy": {
+      "title": "Privacy policy",
+      "body": "Placeholder — replace with your privacy policy (GDPR Art. 13/14): controller, purposes, legal bases, storage duration, recipients, and data-subject rights."
+    }
+  },
+  "notFound": {
+    "title": "Page not found",
+    "body": "The page you are looking for does not exist.",
+    "home": "Go to home page"
+  }
+}

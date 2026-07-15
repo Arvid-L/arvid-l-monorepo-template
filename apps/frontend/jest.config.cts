@@ -12,7 +12,9 @@ module.exports = {
       },
     ],
   },
-  transformIgnorePatterns: ['node_modules/(?!.*\\.mjs$)'],
+  // @jsverse/* ships an ESM-only "index.esm.js" (not ".mjs"), so the
+  // default "*.mjs$" carve-out misses it and Jest chokes on `export`.
+  transformIgnorePatterns: ['node_modules/(?!.*\\.mjs$|@jsverse)'],
   snapshotSerializers: [
     'jest-preset-angular/build/serializers/no-ng-attributes',
     'jest-preset-angular/build/serializers/ng-snapshot',

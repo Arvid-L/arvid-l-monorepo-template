@@ -1,11 +1,12 @@
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { App } from './app.component';
+import { getTranslocoTestingModule } from './core/i18n/transloco-testing';
 
 describe('App', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [App],
+      imports: [App, getTranslocoTestingModule()],
       providers: [provideRouter([])],
     }).compileComponents();
   });

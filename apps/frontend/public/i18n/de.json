@@ -1,0 +1,154 @@
+{
+  "nav": {
+    "title": "Arvid L Monorepo",
+    "login": "Anmelden",
+    "logout": "Abmelden",
+    "settings": "Einstellungen",
+    "users": "Benutzer"
+  },
+  "footer": {
+    "imprint": "Impressum",
+    "privacy": "Datenschutz"
+  },
+  "common": {
+    "email": "E-Mail",
+    "password": "Passwort",
+    "backToLogin": "Zurück zur Anmeldung",
+    "emailRequired": "E-Mail ist erforderlich",
+    "emailInvalid": "Gültige E-Mail-Adresse eingeben",
+    "passwordRequired": "Passwort ist erforderlich",
+    "passwordMinLength": "Mindestens 8 Zeichen",
+    "passwordMismatch": "Passwörter stimmen nicht überein"
+  },
+  "auth": {
+    "login": {
+      "title": "Anmelden",
+      "submit": "Anmelden",
+      "unverifiedHint": "Die E-Mail-Adresse dieses Kontos ist noch nicht bestätigt.",
+      "resend": "Bestätigungsmail erneut senden",
+      "resendSent": "Eine neue Mail ist unterwegs — prüfe deinen Posteingang.",
+      "forgotLink": "Passwort vergessen?",
+      "registerLink": "Konto erstellen"
+    },
+    "register": {
+      "title": "Konto erstellen",
+      "displayName": "Anzeigename (optional)",
+      "confirmPassword": "Passwort bestätigen",
+      "privacyPrefix": "Ich habe die",
+      "privacyLinkLabel": "Datenschutzerklärung gelesen und akzeptiere sie",
+      "privacyRequired": "Die Datenschutzerklärung muss akzeptiert werden",
+      "submit": "Konto erstellen",
+      "loginLink": "Schon ein Konto? Anmelden",
+      "inboxTitle": "Prüfe deinen Posteingang",
+      "inboxBody": "Wir haben einen Bestätigungslink gesendet an",
+      "inboxBodySuffix": ". Klicke ihn an, um dein Konto zu aktivieren.",
+      "resend": "Mail erneut senden"
+    },
+    "forgot": {
+      "title": "Passwort vergessen",
+      "sent": "Falls ein Konto mit dieser E-Mail existiert, ist ein Link zum Zurücksetzen unterwegs. Der Link ist eine Stunde gültig.",
+      "submit": "Link senden"
+    },
+    "reset": {
+      "title": "Passwort zurücksetzen",
+      "missingToken": "Diesem Link fehlt das Reset-Token. Fordere einen neuen an über",
+      "missingTokenLink": "Passwort vergessen",
+      "newPassword": "Neues Passwort",
+      "confirmNewPassword": "Neues Passwort bestätigen",
+      "submit": "Neues Passwort setzen"
+    },
+    "verify": {
+      "verifyingTitle": "Wird geprüft…",
+      "verifyingBody": "Dein Bestätigungslink wird geprüft.",
+      "failedTitle": "Link ungültig oder abgelaufen",
+      "resendPrompt": "Fordere eine neue Bestätigungsmail an:",
+      "resend": "Bestätigungsmail erneut senden",
+      "resendSent": "Falls diese Adresse ein unbestätigtes Konto hat, ist eine Mail unterwegs."
+    }
+  },
+  "example": {
+    "title": "Beispiele",
+    "addTitle": "Neues Beispiel anlegen",
+    "name": "Name",
+    "namePlaceholder": "Name eingeben",
+    "nameRequired": "Name ist erforderlich",
+    "type": "Typ",
+    "typeRequired": "Typ ist erforderlich",
+    "createdAt": "Erstellt am",
+    "actions": "Aktionen",
+    "add": "Beispiel anlegen",
+    "edit": "Bearbeiten",
+    "delete": "Löschen",
+    "noData": "Keine Beispiele gefunden. Lege oben eines an!",
+    "created": "Beispiel erfolgreich angelegt",
+    "deleted": "Beispiel erfolgreich gelöscht",
+    "confirmDelete": "Dieses Beispiel wirklich löschen?"
+  },
+  "settings": {
+    "title": "Einstellungen",
+    "profile": {
+      "title": "Profil",
+      "displayName": "Anzeigename",
+      "save": "Speichern",
+      "saved": "Profil aktualisiert"
+    },
+    "password": {
+      "title": "Passwort ändern",
+      "current": "Aktuelles Passwort",
+      "currentRequired": "Aktuelles Passwort ist erforderlich",
+      "new": "Neues Passwort",
+      "confirm": "Neues Passwort bestätigen",
+      "submit": "Passwort ändern",
+      "changed": "Passwort geändert — andere Sitzungen wurden abgemeldet"
+    },
+    "email": {
+      "title": "E-Mail ändern",
+      "new": "Neue E-Mail-Adresse",
+      "password": "Aktuelles Passwort",
+      "submit": "Bestätigungsmail senden",
+      "sent": "Bestätigungsmail gesendet an",
+      "sentSuffix": ". Deine E-Mail ändert sich, sobald du den Link anklickst."
+    },
+    "danger": {
+      "title": "Konto löschen",
+      "body": "Löscht dein Konto und alle zugehörigen Daten endgültig. Das kann nicht rückgängig gemacht werden.",
+      "password": "Aktuelles Passwort",
+      "submit": "Mein Konto löschen",
+      "confirm": "Konto wirklich löschen? Das kann nicht rückgängig gemacht werden.",
+      "deleted": "Dein Konto wurde gelöscht"
+    }
+  },
+  "admin": {
+    "users": {
+      "title": "Benutzer",
+      "displayName": "Name",
+      "email": "E-Mail",
+      "role": "Rolle",
+      "verified": "Bestätigt",
+      "status": "Status",
+      "createdAt": "Erstellt",
+      "active": "Aktiv",
+      "disabled": "Deaktiviert",
+      "disable": "Deaktivieren",
+      "enable": "Aktivieren",
+      "roleChanged": "Rolle aktualisiert",
+      "statusChanged": "Status aktualisiert",
+      "self": "du"
+    }
+  },
+  "legal": {
+    "imprint": {
+      "title": "Impressum",
+      "body": "Platzhalter — durch dein Impressum ersetzen (§ 5 DDG): Name, Anschrift, Kontakt sowie ggf. Registereinträge und USt-IdNr."
+    },
+    "privacy": {
+      "title": "Datenschutzerklärung",
+      "body": "Platzhalter — durch deine Datenschutzerklärung ersetzen (DSGVO Art. 13/14): Verantwortlicher, Zwecke, Rechtsgrundlagen, Speicherdauer, Empfänger und Betroffenenrechte."
+    }
+  },
+  "notFound": {
+    "title": "Seite nicht gefunden",
+    "body": "Die gesuchte Seite existiert nicht.",
+    "home": "Zur Startseite"
+  }
+}
