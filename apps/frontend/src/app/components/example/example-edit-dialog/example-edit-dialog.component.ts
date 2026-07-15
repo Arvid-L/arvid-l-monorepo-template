@@ -14,6 +14,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatInputModule } from '@angular/material/input';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatSelectModule } from '@angular/material/select';
+import { TranslocoPipe } from '@jsverse/transloco';
 import { Example, ExampleType } from '@arvid-l-monorepo-template/shared';
 import { ExampleApiService } from '../../../core/api/example.api.service';
 import { ToastService } from '../../../core/services/toast.service';
@@ -28,6 +29,7 @@ import { ToastService } from '../../../core/services/toast.service';
     MatInputModule,
     MatFormFieldModule,
     MatSelectModule,
+    TranslocoPipe,
   ],
   templateUrl: './example-edit-dialog.component.html',
   styleUrl: './example-edit-dialog.component.scss',

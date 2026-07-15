@@ -4,6 +4,7 @@ import { ExampleApiService } from '../../core/api/example.api.service';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { of, throwError } from 'rxjs';
 import { Example, ExampleType } from '@arvid-l-monorepo-template/shared';
+import { getTranslocoTestingModule } from '../../core/i18n/transloco-testing';
 
 describe('ExampleComponent', () => {
   let component: ExampleComponent;
@@ -33,7 +34,7 @@ describe('ExampleComponent', () => {
     } as any;
 
     await TestBed.configureTestingModule({
-      imports: [ExampleComponent],
+      imports: [ExampleComponent, getTranslocoTestingModule()],
       providers: [
         { provide: ExampleApiService, useValue: mockExampleApiService },
         { provide: MatSnackBar, useValue: mockSnackBar },

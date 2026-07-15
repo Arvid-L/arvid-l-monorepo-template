@@ -5,6 +5,7 @@ import { of, throwError } from 'rxjs';
 import { LoginComponent } from './login.component';
 import { AuthService } from '../../../core/auth/auth.service';
 import { AuthApiService } from '../../../core/auth/auth.api.service';
+import { getTranslocoTestingModule } from '../../../core/i18n/transloco-testing';
 
 describe('LoginComponent', () => {
   let component: LoginComponent;
@@ -22,7 +23,7 @@ describe('LoginComponent', () => {
     } as any;
 
     await TestBed.configureTestingModule({
-      imports: [LoginComponent],
+      imports: [LoginComponent, getTranslocoTestingModule()],
       providers: [
         provideRouter([]),
         { provide: AuthService, useValue: mockAuthService },

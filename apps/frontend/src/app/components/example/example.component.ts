@@ -16,6 +16,7 @@ import { MatCardModule } from '@angular/material/card';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatSnackBarModule } from '@angular/material/snack-bar';
+import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { Example, ExampleType } from '@arvid-l-monorepo-template/shared';
 import { ExampleEditDialogComponent } from './example-edit-dialog/example-edit-dialog.component';
 import { ExampleApiService } from '../../core/api/example.api.service';
@@ -37,6 +38,7 @@ import { ToastService } from '../../core/services/toast.service';
     MatTooltipModule,
     MatDialogModule,
     MatSnackBarModule,
+    TranslocoPipe,
   ],
   templateUrl: './example.component.html',
   styleUrls: ['./example.component.scss'],
@@ -46,6 +48,7 @@ export class ExampleComponent {
   private exampleApiService = inject(ExampleApiService);
   private dialog = inject(MatDialog);
   private toast = inject(ToastService);
+  private transloco = inject(TranslocoService);
 
   examples = signal<Example[]>([]);
   displayedColumns = ['name', 'type', 'createdAt', 'actions'];
@@ -74,7 +77,7 @@ export class ExampleComponent {
     if (this.form.valid) {
       this.exampleApiService.create(this.form.value).subscribe({
         next: () => {
-          this.toast.success('Example created successfully');
+          this.toast.success(this.transloco.translate('example.created'));
           this.form.reset();
           this.loadExamples();
         },
@@ -98,10 +101,10 @@ export class ExampleComponent {
   }
 
   onDelete(id: string): void {
-    if (confirm('Are you sure you want to delete this example?')) {
+    if (confirm(this.transloco.translate('example.confirmDelete'))) {
       this.exampleApiService.delete(id).subscribe({
         next: () => {
-          this.toast.success('Example deleted successfully');
+          this.toast.success(this.transloco.translate('example.deleted'));
           this.loadExamples();
         },
         // errors surface via the global httpErrorInterceptor toast

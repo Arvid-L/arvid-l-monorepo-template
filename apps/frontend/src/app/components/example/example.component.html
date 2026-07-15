@@ -1,24 +1,28 @@
 <div class="example-container">
-  <h1>Examples</h1>
+  <h1>{{ 'example.title' | transloco }}</h1>
 
   <!-- Create Form -->
   <mat-card class="create-form">
     <mat-card-header>
-      <mat-card-title>Add New Example</mat-card-title>
+      <mat-card-title>{{ 'example.addTitle' | transloco }}</mat-card-title>
     </mat-card-header>
     <mat-card-content>
       <form [formGroup]="form" (ngSubmit)="onSubmit()">
         <div class="form-row">
           <mat-form-field appearance="outline">
-            <mat-label>Name</mat-label>
-            <input matInput formControlName="name" placeholder="Enter name" />
+            <mat-label>{{ 'example.name' | transloco }}</mat-label>
+            <input
+              matInput
+              formControlName="name"
+              [placeholder]="'example.namePlaceholder' | transloco"
+            />
             @if (form.get('name')?.hasError('required')) {
-              <mat-error>Name is required</mat-error>
+              <mat-error>{{ 'example.nameRequired' | transloco }}</mat-error>
             }
           </mat-form-field>
 
           <mat-form-field appearance="outline">
-            <mat-label>Type</mat-label>
+            <mat-label>{{ 'example.type' | transloco }}</mat-label>
             <mat-select formControlName="type">
               @for (type of exampleTypes; track type) {
                 <mat-option [value]="type">
@@ -27,7 +31,7 @@
               }
             </mat-select>
             @if (form.get('type')?.hasError('required')) {
-              <mat-error>Type is required</mat-error>
+              <mat-error>{{ 'example.typeRequired' | transloco }}</mat-error>
             }
           </mat-form-field>
 
@@ -37,7 +41,7 @@
             type="submit"
             [disabled]="!form.valid"
           >
-            Add Example
+            {{ 'example.add' | transloco }}
           </button>
         </div>
       </form>
@@ -49,19 +53,25 @@
     <table mat-table [dataSource]="examples()" class="example-table">
       <!-- Name Column -->
       <ng-container matColumnDef="name">
-        <th mat-header-cell *matHeaderCellDef>Name</th>
+        <th mat-header-cell *matHeaderCellDef>
+          {{ 'example.name' | transloco }}
+        </th>
         <td mat-cell *matCellDef="let example">{{ example.name }}</td>
       </ng-container>
 
       <!-- Type Column -->
       <ng-container matColumnDef="type">
-        <th mat-header-cell *matHeaderCellDef>Type</th>
+        <th mat-header-cell *matHeaderCellDef>
+          {{ 'example.type' | transloco }}
+        </th>
         <td mat-cell *matCellDef="let example">{{ example.type }}</td>
       </ng-container>
 
       <!-- Created At Column -->
       <ng-container matColumnDef="createdAt">
-        <th mat-header-cell *matHeaderCellDef>Created At</th>
+        <th mat-header-cell *matHeaderCellDef>
+          {{ 'example.createdAt' | transloco }}
+        </th>
         <td mat-cell *matCellDef="let example">
           {{ example.createdAt | date: 'short' }}
         </td>
@@ -69,13 +79,15 @@
 
       <!-- Actions Column -->
       <ng-container matColumnDef="actions">
-        <th mat-header-cell *matHeaderCellDef>Actions</th>
+        <th mat-header-cell *matHeaderCellDef>
+          {{ 'example.actions' | transloco }}
+        </th>
         <td mat-cell *matCellDef="let example">
           <button
             mat-icon-button
             color="primary"
             (click)="onEdit(example)"
-            matTooltip="Edit"
+            [matTooltip]="'example.edit' | transloco"
           >
             <mat-icon>edit</mat-icon>
           </button>
@@ -83,7 +95,7 @@
             mat-icon-button
             color="warn"
             (click)="onDelete(example.id)"
-            matTooltip="Delete"
+            [matTooltip]="'example.delete' | transloco"
           >
             <mat-icon>delete</mat-icon>
           </button>
@@ -95,7 +107,7 @@
     </table>
 
     @if (examples().length === 0) {
-      <div class="no-data">No examples found. Create one above!</div>
+      <div class="no-data">{{ 'example.noData' | transloco }}</div>
     }
   </div>
 </div>

@@ -82,7 +82,10 @@
     "noData": "No examples found. Create one above!",
     "created": "Example created successfully",
     "deleted": "Example deleted successfully",
-    "confirmDelete": "Are you sure you want to delete this example?"
+    "confirmDelete": "Are you sure you want to delete this example?",
+    "editTitle": "Edit Example",
+    "save": "Save",
+    "cancel": "Cancel"
   },
   "settings": {
     "title": "Settings",

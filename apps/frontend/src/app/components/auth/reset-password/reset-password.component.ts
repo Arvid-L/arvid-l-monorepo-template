@@ -12,6 +12,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
+import { TranslocoPipe } from '@jsverse/transloco';
 import { AuthApiService } from '../../../core/auth/auth.api.service';
 import { ToastService } from '../../../core/services/toast.service';
 import { ROUTES } from '../../../core/constants/routes.constants';
@@ -33,6 +34,7 @@ const passwordsMatch = (group: AbstractControl): ValidationErrors | null =>
     MatCardModule,
     MatFormFieldModule,
     MatInputModule,
+    TranslocoPipe,
   ],
   templateUrl: './reset-password.component.html',
   styleUrls: ['../auth-page.scss'],

@@ -10,6 +10,7 @@ import { VerifyEmailComponent } from './verify-email.component';
 import { AuthService } from '../../../core/auth/auth.service';
 import { AuthApiService } from '../../../core/auth/auth.api.service';
 import { ToastService } from '../../../core/services/toast.service';
+import { getTranslocoTestingModule } from '../../../core/i18n/transloco-testing';
 
 describe('VerifyEmailComponent', () => {
   let mockAuthService: jest.Mocked<AuthService>;
@@ -23,7 +24,7 @@ describe('VerifyEmailComponent', () => {
     token: string | null,
   ): Promise<ComponentFixture<VerifyEmailComponent>> => {
     await TestBed.configureTestingModule({
-      imports: [VerifyEmailComponent],
+      imports: [VerifyEmailComponent, getTranslocoTestingModule()],
       providers: [
         provideRouter([]),
         { provide: AuthService, useValue: mockAuthService },

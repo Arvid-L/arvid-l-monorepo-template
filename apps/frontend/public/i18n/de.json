@@ -82,7 +82,10 @@
     "noData": "Keine Beispiele gefunden. Lege oben eines an!",
     "created": "Beispiel erfolgreich angelegt",
     "deleted": "Beispiel erfolgreich gelöscht",
-    "confirmDelete": "Dieses Beispiel wirklich löschen?"
+    "confirmDelete": "Dieses Beispiel wirklich löschen?",
+    "editTitle": "Beispiel bearbeiten",
+    "save": "Speichern",
+    "cancel": "Abbrechen"
   },
   "settings": {
     "title": "Einstellungen",

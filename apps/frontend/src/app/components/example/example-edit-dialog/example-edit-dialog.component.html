@@ -1,16 +1,16 @@
-<h2 mat-dialog-title>Edit Example</h2>
+<h2 mat-dialog-title>{{ 'example.editTitle' | transloco }}</h2>
 <mat-dialog-content>
   <form [formGroup]="form">
     <mat-form-field appearance="outline" style="width: 100%">
-      <mat-label>Name</mat-label>
+      <mat-label>{{ 'example.name' | transloco }}</mat-label>
       <input matInput formControlName="name" />
       @if (form.get('name')?.hasError('required')) {
-        <mat-error>Name is required</mat-error>
+        <mat-error>{{ 'example.nameRequired' | transloco }}</mat-error>
       }
     </mat-form-field>
 
     <mat-form-field appearance="outline" style="width: 100%">
-      <mat-label>Type</mat-label>
+      <mat-label>{{ 'example.type' | transloco }}</mat-label>
       <mat-select formControlName="type">
         @for (type of exampleTypes; track type) {
           <mat-option [value]="type">
@@ -19,19 +19,21 @@
         }
       </mat-select>
       @if (form.get('type')?.hasError('required')) {
-        <mat-error>Type is required</mat-error>
+        <mat-error>{{ 'example.typeRequired' | transloco }}</mat-error>
       }
     </mat-form-field>
   </form>
 </mat-dialog-content>
 <mat-dialog-actions align="end">
-  <button mat-button (click)="onCancel()">Cancel</button>
+  <button mat-button (click)="onCancel()">
+    {{ 'example.cancel' | transloco }}
+  </button>
   <button
     mat-raised-button
     color="primary"
     (click)="onSave()"
     [disabled]="!form.valid"
   >
-    Save
+    {{ 'example.save' | transloco }}
   </button>
 </mat-dialog-actions>

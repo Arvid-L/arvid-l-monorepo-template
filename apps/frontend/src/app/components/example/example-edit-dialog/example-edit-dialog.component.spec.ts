@@ -4,6 +4,7 @@ import { ExampleApiService } from '../../../core/api/example.api.service';
 import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { of, throwError } from 'rxjs';
 import { Example, ExampleType } from '@arvid-l-monorepo-template/shared';
+import { getTranslocoTestingModule } from '../../../core/i18n/transloco-testing';
 
 describe('ExampleEditDialogComponent', () => {
   let component: ExampleEditDialogComponent;
@@ -29,7 +30,7 @@ describe('ExampleEditDialogComponent', () => {
     } as any;
 
     await TestBed.configureTestingModule({
-      imports: [ExampleEditDialogComponent],
+      imports: [ExampleEditDialogComponent, getTranslocoTestingModule()],
       providers: [
         { provide: ExampleApiService, useValue: mockExampleApiService },
         { provide: MatDialogRef, useValue: mockDialogRef },

@@ -2,32 +2,34 @@
   <mat-card class="auth-card">
     <mat-card-content>
       @if (status() === 'verifying') {
-        <h1>Verifying…</h1>
-        <p>Checking your verification link.</p>
+        <h1>{{ 'auth.verify.verifyingTitle' | transloco }}</h1>
+        <p>{{ 'auth.verify.verifyingBody' | transloco }}</p>
       } @else {
-        <h1>Link invalid or expired</h1>
+        <h1>{{ 'auth.verify.failedTitle' | transloco }}</h1>
         @if (!resendRequested()) {
-          <p>Request a fresh verification mail:</p>
+          <p>{{ 'auth.verify.resendPrompt' | transloco }}</p>
           <form
             class="auth-form"
             [formGroup]="resendForm"
             (ngSubmit)="resend()"
           >
             <mat-form-field appearance="outline">
-              <mat-label>Email</mat-label>
+              <mat-label>{{ 'common.email' | transloco }}</mat-label>
               <input matInput type="email" formControlName="email" />
             </mat-form-field>
             <button mat-flat-button color="primary" type="submit">
-              Resend verification mail
+              {{ 'auth.verify.resend' | transloco }}
             </button>
           </form>
         } @else {
           <p>
-            If that address has an unverified account, a mail is on its way.
+            {{ 'auth.verify.resendSent' | transloco }}
           </p>
         }
         <div class="auth-links">
-          <a [routerLink]="['/', ROUTES.LOGIN]">Back to login</a>
+          <a [routerLink]="['/', ROUTES.LOGIN]">{{
+            'common.backToLogin' | transloco
+          }}</a>
         </div>
       }
     </mat-card-content>
