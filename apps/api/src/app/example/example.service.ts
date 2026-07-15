@@ -1,13 +1,28 @@
 import { Inject, Injectable, NotFoundException } from '@nestjs/common';
-import { Insertable, Kysely, Selectable, Updateable } from 'kysely';
+import { Insertable, Kysely, Selectable, Updateable, sql } from 'kysely';
 import { DATABASE } from '../../database/database.module';
 import { Database } from '../../database/database';
 import {
   CreateExampleDto,
   Example,
+  PageRequest,
+  PageResponse,
   UpdateExampleDto,
 } from '@arvid-l-monorepo-template/shared';
 import { ExampleTable } from '../../database/tables/example.table';
+import {
+  pageOffset,
+  resolveSort,
+  toPageResponse,
+} from '../../common/pagination/pagination.util';
+
+// Sortable columns for GET /examples — camelCase key as the client sends
+// it, snake_case value as the DB knows it.
+const EXAMPLE_SORT_COLUMNS: Record<string, string> = {
+  name: 'name',
+  type: 'type',
+  createdAt: 'created_at',
+};
 
 @Injectable()
 export class ExampleService {
@@ -38,15 +53,35 @@ export class ExampleService {
     };
   }
 
-  async findAll(): Promise<Example[]> {
-    const examples = await this.db
-      .selectFrom('examples')
-      .selectAll()
-      .where('deleted_at', 'is', null)
-      .orderBy('created_at', 'desc')
-      .execute();
+  async findAll(query: PageRequest): Promise<PageResponse<Example>> {
+    const sortColumn = resolveSort(
+      EXAMPLE_SORT_COLUMNS,
+      query.sort,
+      'created_at',
+    );
+    const order = query.order ?? 'desc';
 
-    return examples.map(this.tableToModel);
+    const [rows, countRow] = await Promise.all([
+      this.db
+        .selectFrom('examples')
+        .selectAll()
+        .where('deleted_at', 'is', null)
+        .orderBy(sql.ref(sortColumn), order)
+        .limit(query.pageSize)
+        .offset(pageOffset(query))
+        .execute(),
+      this.db
+        .selectFrom('examples')
+        .select(({ fn }) => fn.countAll<string>().as('total'))
+        .where('deleted_at', 'is', null)
+        .executeTakeFirstOrThrow(),
+    ]);
+
+    return toPageResponse(
+      rows.map(this.tableToModel),
+      Number(countRow.total),
+      query,
+    );
   }
 
   async findOne(id: string): Promise<Example> {

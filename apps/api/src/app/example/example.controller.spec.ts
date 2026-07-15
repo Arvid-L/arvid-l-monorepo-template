@@ -52,13 +52,20 @@ describe('ExampleController', () => {
   });
 
   describe('findAll', () => {
-    it('should return an array of examples', async () => {
-      mockExampleService.findAll.mockResolvedValue([mockExample]);
+    it('passes the page query through and returns the page', async () => {
+      const page = {
+        items: [mockExample],
+        total: 1,
+        page: 1,
+        pageSize: 20,
+      };
+      mockExampleService.findAll.mockResolvedValue(page);
+      const query = { page: 1, pageSize: 20 };
 
-      const result = await controller.findAll();
+      const result = await controller.findAll(query);
 
-      expect(result).toEqual([mockExample]);
-      expect(service.findAll).toHaveBeenCalled();
+      expect(result).toEqual(page);
+      expect(service.findAll).toHaveBeenCalledWith(query);
     });
   });
 

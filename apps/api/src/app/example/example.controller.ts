@@ -1,4 +1,4 @@
-import { Example } from '@arvid-l-monorepo-template/shared';
+import { Example, PageResponse } from '@arvid-l-monorepo-template/shared';
 import { CreateExampleDto, UpdateExampleDto } from './dto';
 import {
   Body,
@@ -10,16 +10,18 @@ import {
   Param,
   Patch,
   Post,
+  Query,
 } from '@nestjs/common';
 import { ExampleService } from './example.service';
+import { PageQueryDto } from '../../common/pagination/page-query.dto';
 
 @Controller('examples')
 export class ExampleController {
   constructor(private readonly exampleService: ExampleService) {}
 
   @Get()
-  async findAll(): Promise<Example[]> {
-    return this.exampleService.findAll();
+  async findAll(@Query() query: PageQueryDto): Promise<PageResponse<Example>> {
+    return this.exampleService.findAll(query);
   }
 
   @Get(':id')

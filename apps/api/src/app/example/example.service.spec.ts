@@ -51,37 +51,48 @@ describe('ExampleService', () => {
   });
 
   describe('findAll', () => {
-    it('should return an array of examples', async () => {
-      const mockQueryBuilder = {
-        selectFrom: jest.fn().mockReturnThis(),
-        selectAll: jest.fn().mockReturnThis(),
-        where: jest.fn().mockReturnThis(),
-        orderBy: jest.fn().mockReturnThis(),
-        execute: jest.fn().mockResolvedValue([mockExampleTable]),
-      };
-      mockDb.selectFrom.mockReturnValue(mockQueryBuilder);
+    const query = { page: 1, pageSize: 20 };
 
-      const result = await service.findAll();
-
-      expect(result).toHaveLength(1);
-      expect(result[0].id).toBe('1');
-      expect(result[0].name).toBe('Test Example');
-      expect(mockDb.selectFrom).toHaveBeenCalledWith('examples');
+    const listBuilder = () => ({
+      selectAll: jest.fn().mockReturnThis(),
+      where: jest.fn().mockReturnThis(),
+      orderBy: jest.fn().mockReturnThis(),
+      limit: jest.fn().mockReturnThis(),
+      offset: jest.fn().mockReturnThis(),
+      execute: jest.fn().mockResolvedValue([mockExampleTable]),
+    });
+    const countBuilder = (total: string) => ({
+      select: jest.fn().mockReturnThis(),
+      where: jest.fn().mockReturnThis(),
+      executeTakeFirstOrThrow: jest.fn().mockResolvedValue({ total }),
     });
 
-    it('should return empty array when no examples found', async () => {
-      const mockQueryBuilder = {
-        selectFrom: jest.fn().mockReturnThis(),
-        selectAll: jest.fn().mockReturnThis(),
-        where: jest.fn().mockReturnThis(),
-        orderBy: jest.fn().mockReturnThis(),
-        execute: jest.fn().mockResolvedValue([]),
-      };
-      mockDb.selectFrom.mockReturnValue(mockQueryBuilder);
+    it('returns a page of examples with the total count', async () => {
+      const list = listBuilder();
+      mockDb.selectFrom
+        .mockReturnValueOnce(list)
+        .mockReturnValueOnce(countBuilder('41'));
 
-      const result = await service.findAll();
+      const result = await service.findAll(query);
 
-      expect(result).toEqual([]);
+      expect(result.items).toHaveLength(1);
+      expect(result.items[0].name).toBe('Test Example');
+      expect(result.total).toBe(41);
+      expect(result.page).toBe(1);
+      expect(result.pageSize).toBe(20);
+      expect(list.limit).toHaveBeenCalledWith(20);
+      expect(list.offset).toHaveBeenCalledWith(0);
+    });
+
+    it('offsets later pages', async () => {
+      const list = listBuilder();
+      mockDb.selectFrom
+        .mockReturnValueOnce(list)
+        .mockReturnValueOnce(countBuilder('41'));
+
+      await service.findAll({ page: 3, pageSize: 10 });
+
+      expect(list.offset).toHaveBeenCalledWith(20);
     });
   });
 
