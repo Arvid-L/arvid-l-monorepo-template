@@ -6,6 +6,7 @@ import * as migration_003_refresh_tokens from './003_create_refresh_tokens_table
 import * as migration_004_user_roles from './004_add_role_to_users';
 import * as migration_005_password_reset_tokens from './005_create_password_reset_tokens_table';
 import * as migration_006_email_verification from './006_add_email_verification';
+import * as migration_007_account_management from './007_account_management';
 
 export const migrations: Record<string, Migration> = {
   migration_001_example,
@@ -14,4 +15,5 @@ export const migrations: Record<string, Migration> = {
   migration_004_user_roles,
   migration_005_password_reset_tokens,
   migration_006_email_verification,
+  migration_007_account_management,
 };

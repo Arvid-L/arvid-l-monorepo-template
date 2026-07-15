@@ -7,4 +7,7 @@ export interface UserTable extends BaseTable {
   password_hash: string;
   role: Generated<UserRole>;
   email_verified_at: string | Date | null;
+  display_name: string | null;
+  disabled_at: string | Date | null;
+  privacy_accepted_at: string | Date | null;
 }
