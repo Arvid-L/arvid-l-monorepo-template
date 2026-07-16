@@ -20,6 +20,15 @@
     "passwordMinLength": "Mindestens 8 Zeichen",
     "passwordMismatch": "Passwörter stimmen nicht überein"
   },
+  "paginator": {
+    "itemsPerPage": "Einträge pro Seite:",
+    "nextPage": "Nächste Seite",
+    "previousPage": "Vorherige Seite",
+    "firstPage": "Erste Seite",
+    "lastPage": "Letzte Seite",
+    "range": "{{start}} – {{end}} von {{total}}",
+    "rangeEmpty": "0 von {{total}}"
+  },
   "auth": {
     "login": {
       "title": "Anmelden",

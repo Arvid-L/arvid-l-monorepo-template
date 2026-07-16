@@ -24,16 +24,14 @@ describe('ExampleComponent', () => {
 
   beforeEach(async () => {
     mockExampleApiService = {
-      getAll: jest
-        .fn()
-        .mockReturnValue(
-          of({
-            items: mockExamples,
-            total: mockExamples.length,
-            page: 1,
-            pageSize: 10,
-          }),
-        ),
+      getAll: jest.fn().mockReturnValue(
+        of({
+          items: mockExamples,
+          total: mockExamples.length,
+          page: 1,
+          pageSize: 10,
+        }),
+      ),
       create: jest.fn().mockReturnValue(of(mockExamples[0])),
       delete: jest.fn().mockReturnValue(of(undefined)),
     } as any;
@@ -62,6 +60,23 @@ describe('ExampleComponent', () => {
   it('should load examples on init', () => {
     expect(mockExampleApiService.getAll).toHaveBeenCalled();
     expect(component.examples()).toEqual(mockExamples);
+  });
+
+  it('should populate total from the page response', () => {
+    expect(component.total()).toBe(mockExamples.length);
+  });
+
+  it('should map the 0-based paginator event to a 1-based page request', () => {
+    mockExampleApiService.getAll.mockClear();
+
+    component.onPage({ pageIndex: 1, pageSize: 25, length: 40 });
+
+    expect(component.pageIndex()).toBe(1);
+    expect(component.pageSize()).toBe(25);
+    expect(mockExampleApiService.getAll).toHaveBeenCalledWith({
+      page: 2,
+      pageSize: 25,
+    });
   });
 
   it('should have invalid form when empty', () => {
