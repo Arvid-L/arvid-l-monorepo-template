@@ -15,6 +15,7 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatCardModule } from '@angular/material/card';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
+import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
 import { MatSnackBarModule } from '@angular/material/snack-bar';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { Example, ExampleType } from '@arvid-l-monorepo-template/shared';
@@ -37,6 +38,7 @@ import { ToastService } from '../../core/services/toast.service';
     MatCardModule,
     MatTooltipModule,
     MatDialogModule,
+    MatPaginatorModule,
     MatSnackBarModule,
     TranslocoPipe,
   ],
@@ -50,7 +52,11 @@ export class ExampleComponent {
   private toast = inject(ToastService);
   private transloco = inject(TranslocoService);
 
-  examples = signal<Example[]>([]);
+  readonly examples = signal<Example[]>([]);
+  readonly total = signal(0);
+  // MatPaginator is 0-based; the API convention is 1-based.
+  readonly pageIndex = signal(0);
+  readonly pageSize = signal(10);
   displayedColumns = ['name', 'type', 'createdAt', 'actions'];
   exampleTypes = Object.values(ExampleType);
 
@@ -64,13 +70,22 @@ export class ExampleComponent {
   }
 
   loadExamples(): void {
-    this.exampleApiService.getAll().subscribe({
-      next: (examples) => {
-        this.examples.set(examples);
-      },
-      // errors surface via the global httpErrorInterceptor toast
-      error: () => undefined,
-    });
+    this.exampleApiService
+      .getAll({ page: this.pageIndex() + 1, pageSize: this.pageSize() })
+      .subscribe({
+        next: (page) => {
+          this.examples.set(page.items);
+          this.total.set(page.total);
+        },
+        // errors surface via the global httpErrorInterceptor toast
+        error: () => undefined,
+      });
+  }
+
+  onPage(event: PageEvent): void {
+    this.pageIndex.set(event.pageIndex);
+    this.pageSize.set(event.pageSize);
+    this.loadExamples();
   }
 
   onSubmit(): void {

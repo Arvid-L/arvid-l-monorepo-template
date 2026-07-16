@@ -40,14 +40,21 @@ describe('ExampleApiService', () => {
     expect(service).toBeTruthy();
   });
 
-  it('should get all examples', () => {
-    service.getAll().subscribe((examples) => {
-      expect(examples).toEqual([mockExample]);
+  it('getAll requests a page and returns it', () => {
+    const page = { items: [], total: 0, page: 1, pageSize: 10 };
+
+    service.getAll({ page: 1, pageSize: 10 }).subscribe((result) => {
+      expect(result).toEqual(page);
     });
 
-    const req = httpMock.expectOne(`${environment.apiUrl}/examples`);
+    const req = httpMock.expectOne(
+      (r) =>
+        r.url === `${environment.apiUrl}/examples` &&
+        r.params.get('page') === '1' &&
+        r.params.get('pageSize') === '10',
+    );
     expect(req.request.method).toBe('GET');
-    req.flush([mockExample]);
+    req.flush(page);
   });
 
   it('should get one example', () => {

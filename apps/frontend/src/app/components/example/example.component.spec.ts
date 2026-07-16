@@ -24,7 +24,16 @@ describe('ExampleComponent', () => {
 
   beforeEach(async () => {
     mockExampleApiService = {
-      getAll: jest.fn().mockReturnValue(of(mockExamples)),
+      getAll: jest
+        .fn()
+        .mockReturnValue(
+          of({
+            items: mockExamples,
+            total: mockExamples.length,
+            page: 1,
+            pageSize: 10,
+          }),
+        ),
       create: jest.fn().mockReturnValue(of(mockExamples[0])),
       delete: jest.fn().mockReturnValue(of(undefined)),
     } as any;
