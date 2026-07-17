@@ -47,6 +47,10 @@ export interface ChangeEmailDto {
   password: string;
 }
 
+export interface DeleteAccountDto {
+  password: string;
+}
+
 export interface LoginResponse {
   accessToken: string;
   refreshToken: string;

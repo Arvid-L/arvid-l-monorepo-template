@@ -319,6 +319,15 @@ export class AuthService {
       );
   }
 
+  async deleteAccount(userId: string, password: string): Promise<void> {
+    const user = await this.usersService.findById(userId);
+    if (!user || !verifyPassword(password, user.password_hash)) {
+      // 400, not 401 — see changePassword.
+      throw new BadRequestException('Current password is incorrect');
+    }
+    await this.usersService.deleteHard(userId);
+  }
+
   // /auth/me reads from the DB (not the JWT) so displayName and future
   // profile fields are always fresh.
   async me(userId: string): Promise<AuthUser> {

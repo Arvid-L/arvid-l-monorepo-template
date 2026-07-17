@@ -24,6 +24,7 @@ describe('AuthService', () => {
   const markEmailVerified = jest.fn();
   const updateDisplayName = jest.fn();
   const updateEmail = jest.fn();
+  const deleteHard = jest.fn();
   const issue = jest.fn();
   const findValid = jest.fn();
   const revoke = jest.fn();
@@ -62,6 +63,7 @@ describe('AuthService', () => {
             markEmailVerified,
             updateDisplayName,
             updateEmail,
+            deleteHard,
           },
         },
         {
@@ -499,6 +501,25 @@ describe('AuthService', () => {
       await service.changeEmail('user-1', 'new@example.org', 'secret-password');
 
       expect(sendMail).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('deleteAccount', () => {
+    it('rejects a wrong password with 400 and deletes nothing', async () => {
+      findById.mockResolvedValue(storedUser);
+
+      await expect(
+        service.deleteAccount('user-1', 'wrong'),
+      ).rejects.toBeInstanceOf(BadRequestException);
+      expect(deleteHard).not.toHaveBeenCalled();
+    });
+
+    it('hard-deletes the user after password confirmation', async () => {
+      findById.mockResolvedValue(storedUser);
+
+      await service.deleteAccount('user-1', 'secret-password');
+
+      expect(deleteHard).toHaveBeenCalledWith('user-1');
     });
   });
 });

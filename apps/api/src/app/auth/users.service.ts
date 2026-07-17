@@ -107,4 +107,11 @@ export class UsersService {
       .where('id', '=', id)
       .execute();
   }
+
+  // Account deletion is a hard DELETE on purpose: soft delete would keep
+  // the email in the unique index (blocks re-registration) and survive a
+  // GDPR erasure request. Tokens die via FK cascade.
+  async deleteHard(id: string): Promise<void> {
+    await this.db.deleteFrom('users').where('id', '=', id).execute();
+  }
 }

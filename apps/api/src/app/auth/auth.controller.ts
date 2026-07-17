@@ -31,6 +31,7 @@ import { ResendVerificationDto } from './dto/resend-verification.dto';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
 import { ChangeEmailDto } from './dto/change-email.dto';
+import { DeleteAccountDto } from './dto/delete-account.dto';
 
 // Credential endpoints get a strict rate limit on top of the global one
 // (brute-force protection).
@@ -125,6 +126,18 @@ export class AuthController {
     @Body() dto: ChangeEmailDto,
   ): Promise<void> {
     await this.authService.changeEmail(user.sub, dto.newEmail, dto.password);
+  }
+
+  // POST (not DELETE): needs a body for the password confirmation.
+  @Post('delete-account')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @UseGuards(JwtAuthGuard)
+  @Throttle(CREDENTIAL_THROTTLE)
+  async deleteAccount(
+    @CurrentUser() user: JwtPayload,
+    @Body() dto: DeleteAccountDto,
+  ): Promise<void> {
+    await this.authService.deleteAccount(user.sub, dto.password);
   }
 
   // Protected example — the pattern to copy for any secured endpoint.
