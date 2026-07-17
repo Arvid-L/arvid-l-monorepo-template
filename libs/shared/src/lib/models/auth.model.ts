@@ -7,6 +7,21 @@ export interface AuthUser {
   displayName: string | null;
 }
 
+// Admin view of a user — what GET /auth/users returns.
+export interface AdminUser extends AuthUser {
+  emailVerifiedAt: string | null;
+  disabledAt: string | null;
+  createdAt: string;
+}
+
+export interface UpdateUserRoleDto {
+  role: UserRole;
+}
+
+export interface UpdateUserStatusDto {
+  disabled: boolean;
+}
+
 export interface LoginDto {
   email: string;
   password: string;

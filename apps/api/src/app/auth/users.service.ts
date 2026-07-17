@@ -1,9 +1,19 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { Kysely, Selectable } from 'kysely';
-import { AuthUser, UserRole } from '@arvid-l-monorepo-template/shared';
+import { Kysely, Selectable, sql } from 'kysely';
+import {
+  AdminUser,
+  PageRequest,
+  PageResponse,
+  UserRole,
+} from '@arvid-l-monorepo-template/shared';
 import { DATABASE } from '../../database/database.module';
 import { Database } from '../../database/database';
 import { UserTable } from '../../database/tables/user.table';
+import {
+  pageOffset,
+  resolveSort,
+  toPageResponse,
+} from '../../common/pagination/pagination.util';
 
 export interface CreateUserInput {
   email: string;
@@ -14,24 +24,83 @@ export interface CreateUserInput {
   privacyAccepted?: boolean;
 }
 
+const USER_SORT_COLUMNS: Record<string, string> = {
+  email: 'email',
+  role: 'role',
+  createdAt: 'created_at',
+};
+
 @Injectable()
 export class UsersService {
   constructor(@Inject(DATABASE) private readonly db: Kysely<Database>) {}
 
-  async listAll(): Promise<AuthUser[]> {
-    const rows = await this.db
-      .selectFrom('users')
-      .select(['id', 'email', 'role', 'display_name'])
-      .where('deleted_at', 'is', null)
-      .orderBy('created_at', 'asc')
-      .execute();
+  private toAdminUser(user: Selectable<UserTable>): AdminUser {
+    return {
+      id: user.id,
+      email: user.email,
+      role: user.role,
+      displayName: user.display_name,
+      emailVerifiedAt: user.email_verified_at
+        ? new Date(user.email_verified_at).toISOString()
+        : null,
+      disabledAt: user.disabled_at
+        ? new Date(user.disabled_at).toISOString()
+        : null,
+      createdAt: new Date(user.created_at).toISOString(),
+    };
+  }
 
-    return rows.map((row) => ({
-      id: row.id,
-      email: row.email,
-      role: row.role,
-      displayName: row.display_name,
-    }));
+  async listPaged(query: PageRequest): Promise<PageResponse<AdminUser>> {
+    const sortColumn = resolveSort(USER_SORT_COLUMNS, query.sort, 'created_at');
+    // Newest first by default — fresh signups are what admins look for.
+    const order = query.order ?? 'desc';
+
+    const [rows, countRow] = await Promise.all([
+      this.db
+        .selectFrom('users')
+        .selectAll()
+        .where('deleted_at', 'is', null)
+        .orderBy(sql.ref(sortColumn), order)
+        .limit(query.pageSize)
+        .offset(pageOffset(query))
+        .execute(),
+      this.db
+        .selectFrom('users')
+        .select(({ fn }) => fn.countAll<string>().as('total'))
+        .where('deleted_at', 'is', null)
+        .executeTakeFirstOrThrow(),
+    ]);
+
+    return toPageResponse(
+      rows.map((row) => this.toAdminUser(row)),
+      Number(countRow.total),
+      query,
+    );
+  }
+
+  async updateRole(id: string, role: UserRole): Promise<AdminUser | undefined> {
+    const user = await this.db
+      .updateTable('users')
+      .set({ role })
+      .where('id', '=', id)
+      .where('deleted_at', 'is', null)
+      .returningAll()
+      .executeTakeFirst();
+    return user && this.toAdminUser(user);
+  }
+
+  async setDisabled(
+    id: string,
+    disabled: boolean,
+  ): Promise<AdminUser | undefined> {
+    const user = await this.db
+      .updateTable('users')
+      .set({ disabled_at: disabled ? new Date().toISOString() : null })
+      .where('id', '=', id)
+      .where('deleted_at', 'is', null)
+      .returningAll()
+      .executeTakeFirst();
+    return user && this.toAdminUser(user);
   }
 
   async findByEmail(email: string): Promise<Selectable<UserTable> | undefined> {

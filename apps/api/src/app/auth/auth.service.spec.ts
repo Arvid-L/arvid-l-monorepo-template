@@ -4,6 +4,8 @@ import { ConfigService } from '@nestjs/config';
 import {
   BadRequestException,
   ConflictException,
+  ForbiddenException,
+  NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
 import { UserRole } from '@arvid-l-monorepo-template/shared';
@@ -25,6 +27,8 @@ describe('AuthService', () => {
   const updateDisplayName = jest.fn();
   const updateEmail = jest.fn();
   const deleteHard = jest.fn();
+  const updateRole = jest.fn();
+  const setDisabled = jest.fn();
   const issue = jest.fn();
   const findValid = jest.fn();
   const revoke = jest.fn();
@@ -64,6 +68,8 @@ describe('AuthService', () => {
             updateDisplayName,
             updateEmail,
             deleteHard,
+            updateRole,
+            setDisabled,
           },
         },
         {
@@ -520,6 +526,88 @@ describe('AuthService', () => {
       await service.deleteAccount('user-1', 'secret-password');
 
       expect(deleteHard).toHaveBeenCalledWith('user-1');
+    });
+  });
+
+  describe('login of a disabled account', () => {
+    it('rejects with 403 ACCOUNT_DISABLED', async () => {
+      findByEmail.mockResolvedValue({
+        ...storedUser,
+        disabled_at: new Date().toISOString(),
+      });
+
+      await expect(
+        service.login('admin@example.org', 'secret-password'),
+      ).rejects.toMatchObject({
+        response: expect.objectContaining({ errorCode: 'ACCOUNT_DISABLED' }),
+      });
+      expect(issue).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('refresh of a disabled account', () => {
+    it('rejects like an invalid token', async () => {
+      findValid.mockResolvedValue({ id: 'rt-1', user_id: 'user-1' });
+      findById.mockResolvedValue({
+        ...storedUser,
+        disabled_at: new Date().toISOString(),
+      });
+
+      await expect(service.refresh('some-token')).rejects.toBeInstanceOf(
+        UnauthorizedException,
+      );
+    });
+  });
+
+  describe('setUserRole', () => {
+    it('forbids changing your own role', async () => {
+      await expect(
+        service.setUserRole('user-1', 'user-1', UserRole.USER),
+      ).rejects.toBeInstanceOf(ForbiddenException);
+      expect(updateRole).not.toHaveBeenCalled();
+    });
+
+    it('updates the role of another user', async () => {
+      const adminUser = {
+        id: 'user-2',
+        email: 'other@example.org',
+        role: UserRole.MODERATOR,
+        displayName: null,
+        emailVerifiedAt: null,
+        disabledAt: null,
+        createdAt: new Date().toISOString(),
+      };
+      updateRole.mockResolvedValue(adminUser);
+
+      await expect(
+        service.setUserRole('user-1', 'user-2', UserRole.MODERATOR),
+      ).resolves.toEqual(adminUser);
+      expect(updateRole).toHaveBeenCalledWith('user-2', UserRole.MODERATOR);
+    });
+  });
+
+  describe('setUserStatus', () => {
+    it('forbids disabling your own account', async () => {
+      await expect(
+        service.setUserStatus('user-1', 'user-1', true),
+      ).rejects.toBeInstanceOf(ForbiddenException);
+    });
+
+    it('disabling revokes all sessions of the target', async () => {
+      setDisabled.mockResolvedValue({ id: 'user-2', disabledAt: 'now' });
+
+      await service.setUserStatus('user-1', 'user-2', true);
+
+      expect(setDisabled).toHaveBeenCalledWith('user-2', true);
+      expect(revokeAllForUser).toHaveBeenCalledWith('user-2');
+    });
+
+    it('enabling does not touch sessions', async () => {
+      setDisabled.mockResolvedValue({ id: 'user-2', disabledAt: null });
+
+      await service.setUserStatus('user-1', 'user-2', false);
+
+      expect(revokeAllForUser).not.toHaveBeenCalled();
     });
   });
 });

@@ -4,14 +4,18 @@ import {
   Get,
   HttpCode,
   HttpStatus,
+  Param,
   Patch,
   Post,
+  Query,
   UseGuards,
 } from '@nestjs/common';
 import { Throttle } from '@nestjs/throttler';
 import {
+  AdminUser,
   AuthUser,
   LoginResponse,
+  PageResponse,
   RegisterResponse,
   UserRole,
 } from '@arvid-l-monorepo-template/shared';
@@ -32,6 +36,9 @@ import { UpdateProfileDto } from './dto/update-profile.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
 import { ChangeEmailDto } from './dto/change-email.dto';
 import { DeleteAccountDto } from './dto/delete-account.dto';
+import { UpdateUserRoleDto } from './dto/update-user-role.dto';
+import { UpdateUserStatusDto } from './dto/update-user-status.dto';
+import { PageQueryDto } from '../../common/pagination/page-query.dto';
 
 // Credential endpoints get a strict rate limit on top of the global one
 // (brute-force protection).
@@ -156,12 +163,34 @@ export class AuthController {
     return this.authService.updateProfile(user.sub, dto.displayName);
   }
 
-  // Role-protected example — the pattern to copy for admin endpoints.
+  // Role-protected examples — the pattern to copy for admin endpoints.
   // Roles are hierarchical: @Roles(UserRole.MODERATOR) would admit admins too.
   @Get('users')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.ADMIN)
-  users(): Promise<AuthUser[]> {
-    return this.usersService.listAll();
+  users(@Query() query: PageQueryDto): Promise<PageResponse<AdminUser>> {
+    return this.usersService.listPaged(query);
+  }
+
+  @Patch('users/:id/role')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN)
+  updateUserRole(
+    @Param('id') id: string,
+    @Body() dto: UpdateUserRoleDto,
+    @CurrentUser() actor: JwtPayload,
+  ): Promise<AdminUser> {
+    return this.authService.setUserRole(actor.sub, id, dto.role);
+  }
+
+  @Patch('users/:id/status')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN)
+  updateUserStatus(
+    @Param('id') id: string,
+    @Body() dto: UpdateUserStatusDto,
+    @CurrentUser() actor: JwtPayload,
+  ): Promise<AdminUser> {
+    return this.authService.setUserStatus(actor.sub, id, dto.disabled);
   }
 }

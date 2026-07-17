@@ -4,11 +4,13 @@ import {
   ForbiddenException,
   Injectable,
   Logger,
+  NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import {
+  AdminUser,
   AuthUser,
   ErrorCode,
   LoginResponse,
@@ -58,6 +60,14 @@ export class AuthService {
 
     if (!user || !verifyPassword(password, user.password_hash)) {
       throw new UnauthorizedException('Invalid credentials');
+    }
+
+    if (user.disabled_at) {
+      throw new ForbiddenException({
+        statusCode: 403,
+        errorCode: ErrorCode.ACCOUNT_DISABLED,
+        message: 'This account has been disabled',
+      });
     }
 
     // Hard gate: unverified accounts cannot log in. Distinct errorCode
@@ -181,6 +191,12 @@ export class AuthService {
 
     const user = await this.usersService.findById(stored.user_id);
     if (!user) {
+      throw new UnauthorizedException('Invalid or expired refresh token');
+    }
+
+    if (user.disabled_at) {
+      // Same response as an invalid token — a disabled account keeps no
+      // working sessions and learns nothing extra.
       throw new UnauthorizedException('Invalid or expired refresh token');
     }
 
@@ -326,6 +342,41 @@ export class AuthService {
       throw new BadRequestException('Current password is incorrect');
     }
     await this.usersService.deleteHard(userId);
+  }
+
+  async setUserRole(
+    actorId: string,
+    userId: string,
+    role: UserRole,
+  ): Promise<AdminUser> {
+    if (actorId === userId) {
+      // Self-demotion lock-out guard; promoting yourself is a no-op anyway.
+      throw new ForbiddenException('You cannot change your own role');
+    }
+    const user = await this.usersService.updateRole(userId, role);
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+    return user;
+  }
+
+  async setUserStatus(
+    actorId: string,
+    userId: string,
+    disabled: boolean,
+  ): Promise<AdminUser> {
+    if (actorId === userId) {
+      throw new ForbiddenException('You cannot disable your own account');
+    }
+    const user = await this.usersService.setDisabled(userId, disabled);
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+    if (disabled) {
+      // The login gate blocks new sessions; this kills the existing ones.
+      await this.refreshTokensService.revokeAllForUser(userId);
+    }
+    return user;
   }
 
   // /auth/me reads from the DB (not the JWT) so displayName and future
