@@ -314,6 +314,25 @@ describe('AuthService', () => {
         BadRequestException,
       );
     });
+
+    it('throws when the account is disabled and does not consume the token or issue a session', async () => {
+      findValidVerification.mockResolvedValue({
+        id: 'evt-1',
+        user_id: storedUser.id,
+        new_email: null,
+      });
+      findById.mockResolvedValue({
+        ...storedUser,
+        disabled_at: new Date().toISOString(),
+      });
+
+      await expect(service.verifyEmail('raw-token')).rejects.toMatchObject({
+        response: expect.objectContaining({ errorCode: 'ACCOUNT_DISABLED' }),
+      });
+      expect(markUsedVerification).not.toHaveBeenCalled();
+      expect(markEmailVerified).not.toHaveBeenCalled();
+      expect(issue).not.toHaveBeenCalled();
+    });
   });
 
   describe('verifyEmail with a change token', () => {
@@ -457,6 +476,21 @@ describe('AuthService', () => {
       expect(result.refreshToken).toBe('new-refresh-token');
       expect(result.user.id).toBe('user-1');
     });
+
+    it('throws when the account is disabled and issues no session', async () => {
+      findById.mockResolvedValue({
+        ...storedUser,
+        disabled_at: new Date().toISOString(),
+      });
+
+      await expect(
+        service.changePassword('user-1', 'secret-password', 'new-password-123'),
+      ).rejects.toMatchObject({
+        response: expect.objectContaining({ errorCode: 'ACCOUNT_DISABLED' }),
+      });
+      expect(updatePassword).not.toHaveBeenCalled();
+      expect(issue).not.toHaveBeenCalled();
+    });
   });
 
   describe('changeEmail', () => {
@@ -584,6 +618,14 @@ describe('AuthService', () => {
       ).resolves.toEqual(adminUser);
       expect(updateRole).toHaveBeenCalledWith('user-2', UserRole.MODERATOR);
     });
+
+    it('throws NotFoundException when the target user does not exist', async () => {
+      updateRole.mockResolvedValue(undefined);
+
+      await expect(
+        service.setUserRole('user-1', 'ghost', UserRole.MODERATOR),
+      ).rejects.toBeInstanceOf(NotFoundException);
+    });
   });
 
   describe('setUserStatus', () => {
@@ -607,6 +649,15 @@ describe('AuthService', () => {
 
       await service.setUserStatus('user-1', 'user-2', false);
 
+      expect(revokeAllForUser).not.toHaveBeenCalled();
+    });
+
+    it('throws NotFoundException when the target user does not exist', async () => {
+      setDisabled.mockResolvedValue(undefined);
+
+      await expect(
+        service.setUserStatus('user-1', 'ghost', true),
+      ).rejects.toBeInstanceOf(NotFoundException);
       expect(revokeAllForUser).not.toHaveBeenCalled();
     });
   });

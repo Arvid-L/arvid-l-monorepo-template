@@ -119,6 +119,17 @@ export class AuthService {
       throw new BadRequestException('Invalid or expired verification token');
     }
 
+    // Same gate as login(): a disabled account gets no session. Checked
+    // before markUsed / markEmailVerified so the token stays unconsumed —
+    // if the account is later re-enabled, the still-valid link works.
+    if (user.disabled_at) {
+      throw new ForbiddenException({
+        statusCode: 403,
+        errorCode: ErrorCode.ACCOUNT_DISABLED,
+        message: 'This account has been disabled',
+      });
+    }
+
     if (stored.new_email) {
       // Email-change confirmation: the link went to the new address, so
       // clicking it proves ownership. The unique index has the final word —
@@ -266,6 +277,16 @@ export class AuthService {
       // 400, not 401: a 401 would make the FE interceptor attempt a token
       // refresh and log the user out over a typo.
       throw new BadRequestException('Current password is incorrect');
+    }
+
+    // Same gate as login(): a disabled account gets no fresh session, even
+    // holding a still-valid access token. Reject before mutating anything.
+    if (user.disabled_at) {
+      throw new ForbiddenException({
+        statusCode: 403,
+        errorCode: ErrorCode.ACCOUNT_DISABLED,
+        message: 'This account has been disabled',
+      });
     }
 
     await this.usersService.updatePassword(userId, hashPassword(newPassword));
