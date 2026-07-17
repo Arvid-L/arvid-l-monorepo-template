@@ -9,6 +9,8 @@ import {
 } from './components/auth';
 import { ImprintComponent, PrivacyComponent } from './components/legal';
 import { NotFoundComponent } from './components/not-found/not-found.component';
+import { SettingsComponent } from './components/settings/settings.component';
+import { authGuard } from './core/auth/auth.guard';
 import { ROUTES } from './core/constants/routes.constants';
 
 // The example route is public on purpose (template demo). Protect routes
@@ -46,6 +48,11 @@ export const appRoutes: Route[] = [
   {
     path: ROUTES.PRIVACY,
     component: PrivacyComponent,
+  },
+  {
+    path: ROUTES.SETTINGS,
+    component: SettingsComponent,
+    canActivate: [authGuard],
   },
   {
     // The old '**' redirect doubled as the root route — keep '/' working

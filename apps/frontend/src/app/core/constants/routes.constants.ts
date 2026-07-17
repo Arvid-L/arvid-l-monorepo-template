@@ -11,4 +11,5 @@ export const ROUTES = {
   VERIFY_EMAIL: 'verify-email',
   IMPRINT: 'imprint',
   PRIVACY: 'privacy',
+  SETTINGS: 'settings',
 };

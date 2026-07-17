@@ -1,0 +1,157 @@
+<div class="settings-page">
+  <h1>{{ 'settings.title' | transloco }}</h1>
+
+  <mat-card>
+    <mat-card-header>
+      <mat-card-title>{{
+        'settings.profile.title' | transloco
+      }}</mat-card-title>
+    </mat-card-header>
+    <mat-card-content>
+      <form
+        class="settings-form profile-form"
+        [formGroup]="profileForm"
+        (ngSubmit)="saveProfile()"
+      >
+        <mat-form-field appearance="outline">
+          <mat-label>{{
+            'settings.profile.displayName' | transloco
+          }}</mat-label>
+          <input matInput type="text" formControlName="displayName" />
+        </mat-form-field>
+        <button
+          mat-raised-button
+          color="primary"
+          type="submit"
+          [disabled]="!profileForm.valid || savingProfile()"
+        >
+          {{ 'settings.profile.save' | transloco }}
+        </button>
+      </form>
+    </mat-card-content>
+  </mat-card>
+
+  <mat-card>
+    <mat-card-header>
+      <mat-card-title>{{
+        'settings.password.title' | transloco
+      }}</mat-card-title>
+    </mat-card-header>
+    <mat-card-content>
+      <form
+        class="settings-form password-form"
+        [formGroup]="passwordForm"
+        (ngSubmit)="changePassword()"
+      >
+        <mat-form-field appearance="outline">
+          <mat-label>{{ 'settings.password.current' | transloco }}</mat-label>
+          <input matInput type="password" formControlName="currentPassword" />
+          @if (passwordForm.get('currentPassword')?.hasError('required')) {
+            <mat-error>{{
+              'settings.password.currentRequired' | transloco
+            }}</mat-error>
+          }
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>{{ 'settings.password.new' | transloco }}</mat-label>
+          <input matInput type="password" formControlName="newPassword" />
+          @if (passwordForm.get('newPassword')?.hasError('minlength')) {
+            <mat-error>{{ 'common.passwordMinLength' | transloco }}</mat-error>
+          }
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>{{ 'settings.password.confirm' | transloco }}</mat-label>
+          <input
+            matInput
+            type="password"
+            formControlName="newPasswordConfirm"
+          />
+          @if (
+            passwordForm.hasError('passwordMismatch') &&
+            passwordForm.get('newPasswordConfirm')?.touched
+          ) {
+            <mat-error>{{ 'common.passwordMismatch' | transloco }}</mat-error>
+          }
+        </mat-form-field>
+        <button
+          mat-raised-button
+          color="primary"
+          type="submit"
+          [disabled]="!passwordForm.valid || changingPassword()"
+        >
+          {{ 'settings.password.submit' | transloco }}
+        </button>
+      </form>
+    </mat-card-content>
+  </mat-card>
+
+  <mat-card>
+    <mat-card-header>
+      <mat-card-title>{{ 'settings.email.title' | transloco }}</mat-card-title>
+    </mat-card-header>
+    <mat-card-content>
+      @if (pendingEmail()) {
+        <p>
+          {{ 'settings.email.sent' | transloco }}
+          <strong>{{ pendingEmail() }}</strong
+          >{{ 'settings.email.sentSuffix' | transloco }}
+        </p>
+      } @else {
+        <form
+          class="settings-form email-form"
+          [formGroup]="emailForm"
+          (ngSubmit)="changeEmail()"
+        >
+          <mat-form-field appearance="outline">
+            <mat-label>{{ 'settings.email.new' | transloco }}</mat-label>
+            <input matInput type="email" formControlName="newEmail" />
+            @if (emailForm.get('newEmail')?.hasError('email')) {
+              <mat-error>{{ 'common.emailInvalid' | transloco }}</mat-error>
+            }
+          </mat-form-field>
+          <mat-form-field appearance="outline">
+            <mat-label>{{ 'settings.email.password' | transloco }}</mat-label>
+            <input matInput type="password" formControlName="password" />
+          </mat-form-field>
+          <button
+            mat-raised-button
+            color="primary"
+            type="submit"
+            [disabled]="!emailForm.valid || changingEmail()"
+          >
+            {{ 'settings.email.submit' | transloco }}
+          </button>
+        </form>
+      }
+    </mat-card-content>
+  </mat-card>
+
+  <mat-card>
+    <mat-card-header>
+      <mat-card-title class="danger-title">{{
+        'settings.danger.title' | transloco
+      }}</mat-card-title>
+    </mat-card-header>
+    <mat-card-content>
+      <p>{{ 'settings.danger.body' | transloco }}</p>
+      <form
+        class="settings-form delete-form"
+        [formGroup]="deleteForm"
+        (ngSubmit)="deleteAccount()"
+      >
+        <mat-form-field appearance="outline">
+          <mat-label>{{ 'settings.danger.password' | transloco }}</mat-label>
+          <input matInput type="password" formControlName="password" />
+        </mat-form-field>
+        <button
+          mat-raised-button
+          color="warn"
+          type="submit"
+          [disabled]="!deleteForm.valid || deleting()"
+        >
+          {{ 'settings.danger.submit' | transloco }}
+        </button>
+      </form>
+    </mat-card-content>
+  </mat-card>
+</div>

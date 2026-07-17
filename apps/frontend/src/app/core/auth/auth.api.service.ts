@@ -2,12 +2,16 @@ import { HttpClient } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import {
   AuthUser,
+  ChangeEmailDto,
+  ChangePasswordDto,
+  DeleteAccountDto,
   ForgotPasswordDto,
   LoginDto,
   LoginResponse,
   RegisterDto,
   RegisterResponse,
   ResetPasswordDto,
+  UpdateProfileDto,
 } from '@arvid-l-monorepo-template/shared';
 import { finalize, Observable, shareReplay, tap } from 'rxjs';
 import { environment } from '../../environments/environment';
@@ -80,6 +84,26 @@ export class AuthApiService {
     const refreshToken = this.tokenStorage.refreshToken;
     this.tokenStorage.clear();
     return this.http.post<void>(`${this.apiUrl}/logout`, { refreshToken });
+  }
+
+  updateProfile(data: UpdateProfileDto): Observable<AuthUser> {
+    return this.http.patch<AuthUser>(`${this.apiUrl}/profile`, data);
+  }
+
+  // The API revokes all sessions and returns a fresh pair — store it so
+  // THIS session survives the change.
+  changePassword(data: ChangePasswordDto): Observable<LoginResponse> {
+    return this.http
+      .post<LoginResponse>(`${this.apiUrl}/change-password`, data)
+      .pipe(tap((response) => this.storeTokens(response)));
+  }
+
+  changeEmail(data: ChangeEmailDto): Observable<void> {
+    return this.http.post<void>(`${this.apiUrl}/change-email`, data);
+  }
+
+  deleteAccount(data: DeleteAccountDto): Observable<void> {
+    return this.http.post<void>(`${this.apiUrl}/delete-account`, data);
   }
 
   private storeTokens(response: LoginResponse): void {

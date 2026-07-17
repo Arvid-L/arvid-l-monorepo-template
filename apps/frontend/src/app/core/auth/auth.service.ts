@@ -59,4 +59,22 @@ export class AuthService {
     this.authApi.logout().subscribe({ error: () => undefined });
     this.router.navigate([ROUTES.LOGIN]);
   }
+
+  updateProfile(displayName: string): Observable<AuthUser> {
+    return this.authApi
+      .updateProfile({ displayName })
+      .pipe(tap((user) => this.currentUser.set(user)));
+  }
+
+  deleteAccount(password: string): Observable<void> {
+    return this.authApi.deleteAccount({ password }).pipe(
+      tap(() => {
+        // The account is gone — drop all local state, no server logout
+        // (the tokens died with the user row).
+        this.currentUser.set(null);
+        this.tokenStorage.clear();
+        this.router.navigate(['/']);
+      }),
+    );
+  }
 }
