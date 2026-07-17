@@ -4,6 +4,7 @@ import {
   Get,
   HttpCode,
   HttpStatus,
+  Patch,
   Post,
   UseGuards,
 } from '@nestjs/common';
@@ -27,6 +28,7 @@ import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
 import { VerifyEmailDto } from './dto/verify-email.dto';
 import { ResendVerificationDto } from './dto/resend-verification.dto';
+import { UpdateProfileDto } from './dto/update-profile.dto';
 
 // Credential endpoints get a strict rate limit on top of the global one
 // (brute-force protection).
@@ -42,7 +44,7 @@ export class AuthController {
   @Post('register')
   @Throttle(CREDENTIAL_THROTTLE)
   async register(@Body() registerDto: RegisterDto): Promise<RegisterResponse> {
-    return this.authService.register(registerDto.email, registerDto.password);
+    return this.authService.register(registerDto);
   }
 
   @Post('login')
@@ -98,8 +100,17 @@ export class AuthController {
   // Protected example — the pattern to copy for any secured endpoint.
   @Get('me')
   @UseGuards(JwtAuthGuard)
-  me(@CurrentUser() user: JwtPayload): AuthUser {
-    return { id: user.sub, email: user.email, role: user.role };
+  async me(@CurrentUser() user: JwtPayload): Promise<AuthUser> {
+    return this.authService.me(user.sub);
+  }
+
+  @Patch('profile')
+  @UseGuards(JwtAuthGuard)
+  async updateProfile(
+    @CurrentUser() user: JwtPayload,
+    @Body() dto: UpdateProfileDto,
+  ): Promise<AuthUser> {
+    return this.authService.updateProfile(user.sub, dto.displayName);
   }
 
   // Role-protected example — the pattern to copy for admin endpoints.

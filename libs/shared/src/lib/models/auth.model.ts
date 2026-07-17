@@ -4,6 +4,7 @@ export interface AuthUser {
   id: string;
   email: string;
   role: UserRole;
+  displayName: string | null;
 }
 
 export interface LoginDto {
@@ -14,6 +15,13 @@ export interface LoginDto {
 export interface RegisterDto {
   email: string;
   password: string;
+  displayName?: string;
+  // GDPR: registration requires explicit consent to the privacy policy.
+  privacyAccepted: boolean;
+}
+
+export interface UpdateProfileDto {
+  displayName: string;
 }
 
 export interface RefreshDto {

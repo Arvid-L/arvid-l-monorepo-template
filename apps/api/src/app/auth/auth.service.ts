@@ -12,6 +12,7 @@ import {
   AuthUser,
   ErrorCode,
   LoginResponse,
+  RegisterDto,
   RegisterResponse,
   UserRole,
 } from '@arvid-l-monorepo-template/shared';
@@ -70,23 +71,21 @@ export class AuthService {
       });
     }
 
-    return this.issueTokenPair({
-      id: user.id,
-      email: user.email,
-      role: user.role,
-    });
+    return this.issueTokenPair(this.toAuthUser(user));
   }
 
   // Open registration — every new account gets the USER role and starts
   // unverified: no tokens until the mailed link is clicked (hard gate).
   // Admins and moderators are promoted via
   // `npm run user:create -- <email> <pw> <role>` or a future admin UI.
-  async register(email: string, password: string): Promise<RegisterResponse> {
+  async register(dto: RegisterDto): Promise<RegisterResponse> {
     try {
-      const user = await this.usersService.create(
-        email,
-        hashPassword(password),
-      );
+      const user = await this.usersService.create({
+        email: dto.email,
+        passwordHash: hashPassword(dto.password),
+        displayName: dto.displayName || null,
+        privacyAccepted: dto.privacyAccepted,
+      });
       await this.sendVerificationMail(user.id, user.email);
       return { message: 'Check your inbox to verify your email address' };
     } catch (error) {
@@ -114,11 +113,7 @@ export class AuthService {
     await this.emailVerificationTokensService.markUsed(stored.id);
 
     // Clicking the mail link logs the user straight in.
-    return this.issueTokenPair({
-      id: user.id,
-      email: user.email,
-      role: user.role,
-    });
+    return this.issueTokenPair(this.toAuthUser(user));
   }
 
   // Same no-enumeration contract as forgotPassword: always resolves.
@@ -175,11 +170,7 @@ export class AuthService {
     }
 
     await this.refreshTokensService.revoke(stored.id);
-    return this.issueTokenPair({
-      id: user.id,
-      email: user.email,
-      role: user.role,
-    });
+    return this.issueTokenPair(this.toAuthUser(user));
   }
 
   async logout(refreshToken: string): Promise<void> {
@@ -232,6 +223,39 @@ export class AuthService {
     await this.passwordResetTokensService.markUsed(stored.id);
     // The password may have leaked — kill all existing sessions.
     await this.refreshTokensService.revokeAllForUser(stored.user_id);
+  }
+
+  // /auth/me reads from the DB (not the JWT) so displayName and future
+  // profile fields are always fresh.
+  async me(userId: string): Promise<AuthUser> {
+    const user = await this.usersService.findById(userId);
+    if (!user) {
+      throw new UnauthorizedException('Invalid credentials');
+    }
+    return this.toAuthUser(user);
+  }
+
+  async updateProfile(userId: string, displayName: string): Promise<AuthUser> {
+    // Empty submissions clear the name — the UI falls back to the email.
+    await this.usersService.updateDisplayName(
+      userId,
+      displayName.trim() || null,
+    );
+    return this.me(userId);
+  }
+
+  private toAuthUser(user: {
+    id: string;
+    email: string;
+    role: UserRole;
+    display_name: string | null;
+  }): AuthUser {
+    return {
+      id: user.id,
+      email: user.email,
+      role: user.role,
+      displayName: user.display_name,
+    };
   }
 
   private async issueTokenPair(user: AuthUser): Promise<LoginResponse> {

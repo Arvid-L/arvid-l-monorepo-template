@@ -5,17 +5,33 @@ import { DATABASE } from '../../database/database.module';
 import { Database } from '../../database/database';
 import { UserTable } from '../../database/tables/user.table';
 
+export interface CreateUserInput {
+  email: string;
+  passwordHash: string;
+  displayName?: string | null;
+  role?: UserRole;
+  emailVerified?: boolean;
+  privacyAccepted?: boolean;
+}
+
 @Injectable()
 export class UsersService {
   constructor(@Inject(DATABASE) private readonly db: Kysely<Database>) {}
 
   async listAll(): Promise<AuthUser[]> {
-    return this.db
+    const rows = await this.db
       .selectFrom('users')
-      .select(['id', 'email', 'role'])
+      .select(['id', 'email', 'role', 'display_name'])
       .where('deleted_at', 'is', null)
       .orderBy('created_at', 'asc')
       .execute();
+
+    return rows.map((row) => ({
+      id: row.id,
+      email: row.email,
+      role: row.role,
+      displayName: row.display_name,
+    }));
   }
 
   async findByEmail(email: string): Promise<Selectable<UserTable> | undefined> {
@@ -36,20 +52,22 @@ export class UsersService {
       .executeTakeFirst();
   }
 
-  async create(
-    email: string,
-    passwordHash: string,
-    role: UserRole = UserRole.USER,
-    emailVerified = false,
-  ): Promise<Selectable<UserTable>> {
+  async create(input: CreateUserInput): Promise<Selectable<UserTable>> {
     return this.db
       .insertInto('users')
       .values({
-        email,
-        password_hash: passwordHash,
-        role,
+        email: input.email,
+        password_hash: input.passwordHash,
+        display_name: input.displayName ?? null,
+        role: input.role ?? UserRole.USER,
         // Scripted/bootstrap users skip the verification mail round-trip.
-        email_verified_at: emailVerified ? new Date().toISOString() : null,
+        email_verified_at: input.emailVerified
+          ? new Date().toISOString()
+          : null,
+        // Consent timestamp — proof of WHEN the checkbox was accepted.
+        privacy_accepted_at: input.privacyAccepted
+          ? new Date().toISOString()
+          : null,
       })
       .returningAll()
       .executeTakeFirstOrThrow();
@@ -67,6 +85,25 @@ export class UsersService {
     await this.db
       .updateTable('users')
       .set({ password_hash: passwordHash })
+      .where('id', '=', id)
+      .execute();
+  }
+
+  async updateDisplayName(
+    id: string,
+    displayName: string | null,
+  ): Promise<void> {
+    await this.db
+      .updateTable('users')
+      .set({ display_name: displayName })
+      .where('id', '=', id)
+      .execute();
+  }
+
+  async updateEmail(id: string, email: string): Promise<void> {
+    await this.db
+      .updateTable('users')
+      .set({ email })
       .where('id', '=', id)
       .execute();
   }

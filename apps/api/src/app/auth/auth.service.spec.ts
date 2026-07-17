@@ -22,6 +22,8 @@ describe('AuthService', () => {
   const create = jest.fn();
   const updatePassword = jest.fn();
   const markEmailVerified = jest.fn();
+  const updateDisplayName = jest.fn();
+  const updateEmail = jest.fn();
   const issue = jest.fn();
   const findValid = jest.fn();
   const revoke = jest.fn();
@@ -40,6 +42,9 @@ describe('AuthService', () => {
     password_hash: hashPassword('secret-password'),
     role: UserRole.ADMIN,
     email_verified_at: new Date().toISOString(),
+    display_name: null,
+    disabled_at: null,
+    privacy_accepted_at: null,
   };
 
   beforeAll(async () => {
@@ -55,6 +60,8 @@ describe('AuthService', () => {
             create,
             updatePassword,
             markEmailVerified,
+            updateDisplayName,
+            updateEmail,
           },
         },
         {
@@ -105,6 +112,7 @@ describe('AuthService', () => {
         id: 'user-1',
         email: 'admin@example.org',
         role: UserRole.ADMIN,
+        displayName: null,
       });
     });
 
@@ -143,12 +151,19 @@ describe('AuthService', () => {
       issueVerification.mockResolvedValue('raw-verification-token');
       sendMail.mockResolvedValue(undefined);
 
-      const result = await service.register('new@example.org', 'password-123');
+      const result = await service.register({
+        email: 'new@example.org',
+        password: 'password-123',
+        displayName: 'New Person',
+        privacyAccepted: true,
+      });
 
-      expect(create).toHaveBeenCalledWith(
-        'new@example.org',
-        expect.stringMatching(/^scrypt\$/),
-      );
+      expect(create).toHaveBeenCalledWith({
+        email: 'new@example.org',
+        passwordHash: expect.stringMatching(/^scrypt\$/),
+        displayName: 'New Person',
+        privacyAccepted: true,
+      });
       expect(result).toEqual({ message: expect.any(String) });
       expect(issueVerification).toHaveBeenCalledWith(storedUser.id);
       expect(sendMail).toHaveBeenCalledWith(
@@ -171,7 +186,11 @@ describe('AuthService', () => {
       );
 
       await expect(
-        service.register('taken@example.org', 'password123'),
+        service.register({
+          email: 'taken@example.org',
+          password: 'password123',
+          privacyAccepted: true,
+        }),
       ).rejects.toBeInstanceOf(ConflictException);
       expect(issue).not.toHaveBeenCalled();
     });
@@ -340,6 +359,46 @@ describe('AuthService', () => {
       await service.logout('unknown-token');
 
       expect(revoke).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('me', () => {
+    it('returns the fresh user from the DB', async () => {
+      findById.mockResolvedValue({ ...storedUser, display_name: 'Arvid' });
+
+      await expect(service.me('user-1')).resolves.toEqual({
+        id: 'user-1',
+        email: 'admin@example.org',
+        role: UserRole.ADMIN,
+        displayName: 'Arvid',
+      });
+    });
+
+    it('rejects unknown users', async () => {
+      findById.mockResolvedValue(undefined);
+
+      await expect(service.me('ghost')).rejects.toBeInstanceOf(
+        UnauthorizedException,
+      );
+    });
+  });
+
+  describe('updateProfile', () => {
+    it('trims the name and stores null for empty input', async () => {
+      findById.mockResolvedValue(storedUser);
+
+      await service.updateProfile('user-1', '   ');
+
+      expect(updateDisplayName).toHaveBeenCalledWith('user-1', null);
+    });
+
+    it('stores the trimmed display name and returns the fresh user', async () => {
+      findById.mockResolvedValue({ ...storedUser, display_name: 'Arvid' });
+
+      const result = await service.updateProfile('user-1', '  Arvid ');
+
+      expect(updateDisplayName).toHaveBeenCalledWith('user-1', 'Arvid');
+      expect(result.displayName).toBe('Arvid');
     });
   });
 });
