@@ -29,6 +29,7 @@ import { ResetPasswordDto } from './dto/reset-password.dto';
 import { VerifyEmailDto } from './dto/verify-email.dto';
 import { ResendVerificationDto } from './dto/resend-verification.dto';
 import { UpdateProfileDto } from './dto/update-profile.dto';
+import { ChangePasswordDto } from './dto/change-password.dto';
 
 // Credential endpoints get a strict rate limit on top of the global one
 // (brute-force protection).
@@ -95,6 +96,21 @@ export class AuthController {
   @Throttle(CREDENTIAL_THROTTLE)
   async resendVerification(@Body() dto: ResendVerificationDto): Promise<void> {
     await this.authService.resendVerification(dto.email);
+  }
+
+  @Post('change-password')
+  @HttpCode(HttpStatus.OK)
+  @UseGuards(JwtAuthGuard)
+  @Throttle(CREDENTIAL_THROTTLE)
+  async changePassword(
+    @CurrentUser() user: JwtPayload,
+    @Body() dto: ChangePasswordDto,
+  ): Promise<LoginResponse> {
+    return this.authService.changePassword(
+      user.sub,
+      dto.currentPassword,
+      dto.newPassword,
+    );
   }
 
   // Protected example — the pattern to copy for any secured endpoint.

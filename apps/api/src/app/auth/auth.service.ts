@@ -225,6 +225,26 @@ export class AuthService {
     await this.refreshTokensService.revokeAllForUser(stored.user_id);
   }
 
+  async changePassword(
+    userId: string,
+    currentPassword: string,
+    newPassword: string,
+  ): Promise<LoginResponse> {
+    const user = await this.usersService.findById(userId);
+    if (!user || !verifyPassword(currentPassword, user.password_hash)) {
+      // 400, not 401: a 401 would make the FE interceptor attempt a token
+      // refresh and log the user out over a typo.
+      throw new BadRequestException('Current password is incorrect');
+    }
+
+    await this.usersService.updatePassword(userId, hashPassword(newPassword));
+    // Same reasoning as resetPassword: assume other sessions are stale or
+    // hostile once the password changes — kill them, keep this one via a
+    // fresh pair.
+    await this.refreshTokensService.revokeAllForUser(userId);
+    return this.issueTokenPair(this.toAuthUser(user));
+  }
+
   // /auth/me reads from the DB (not the JWT) so displayName and future
   // profile fields are always fresh.
   async me(userId: string): Promise<AuthUser> {

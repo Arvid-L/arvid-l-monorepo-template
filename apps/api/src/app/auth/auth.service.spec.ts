@@ -401,4 +401,33 @@ describe('AuthService', () => {
       expect(result.displayName).toBe('Arvid');
     });
   });
+
+  describe('changePassword', () => {
+    it('rejects a wrong current password with 400 (NOT 401 — the FE interceptor would log the user out)', async () => {
+      findById.mockResolvedValue(storedUser);
+
+      await expect(
+        service.changePassword('user-1', 'wrong', 'new-password-123'),
+      ).rejects.toBeInstanceOf(BadRequestException);
+      expect(updatePassword).not.toHaveBeenCalled();
+    });
+
+    it('updates the hash, revokes all sessions and returns a fresh pair', async () => {
+      findById.mockResolvedValue(storedUser);
+
+      const result = await service.changePassword(
+        'user-1',
+        'secret-password',
+        'new-password-123',
+      );
+
+      expect(updatePassword).toHaveBeenCalledWith(
+        'user-1',
+        expect.stringMatching(/^scrypt\$/),
+      );
+      expect(revokeAllForUser).toHaveBeenCalledWith('user-1');
+      expect(result.refreshToken).toBe('new-refresh-token');
+      expect(result.user.id).toBe('user-1');
+    });
+  });
 });
