@@ -20,7 +20,7 @@ export class EmailVerificationTokensService {
 
   // Returns null when called again within the reissue interval — the
   // resend endpoint must stay silent (no enumeration), so no throw here.
-  async issue(userId: string): Promise<string | null> {
+  async issue(userId: string, newEmail?: string): Promise<string | null> {
     const recent = await this.db
       .selectFrom('email_verification_tokens')
       .select('id')
@@ -49,6 +49,8 @@ export class EmailVerificationTokensService {
       .values({
         user_id: userId,
         token_hash: this.hash(token),
+        // Set for email-CHANGE tokens; null for first-time verification.
+        new_email: newEmail ?? null,
         expires_at: new Date(
           Date.now() + VERIFICATION_TOKEN_TTL_MS,
         ).toISOString(),

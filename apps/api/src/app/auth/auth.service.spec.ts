@@ -288,6 +288,7 @@ describe('AuthService', () => {
       findValidVerification.mockResolvedValue({
         id: 'evt-1',
         user_id: storedUser.id,
+        new_email: null,
       });
       findById.mockResolvedValue(storedUser);
 
@@ -304,6 +305,25 @@ describe('AuthService', () => {
       await expect(service.verifyEmail('bad')).rejects.toBeInstanceOf(
         BadRequestException,
       );
+    });
+  });
+
+  describe('verifyEmail with a change token', () => {
+    it('swaps the email and returns a pair for the new identity', async () => {
+      findValidVerification.mockResolvedValue({
+        id: 'token-1',
+        user_id: 'user-1',
+        new_email: 'new@example.org',
+      });
+      findById.mockResolvedValue({ ...storedUser });
+      updateEmail.mockResolvedValue(undefined);
+
+      const result = await service.verifyEmail('raw-change-token');
+
+      expect(updateEmail).toHaveBeenCalledWith('user-1', 'new@example.org');
+      expect(markEmailVerified).not.toHaveBeenCalled();
+      expect(markUsedVerification).toHaveBeenCalledWith('token-1');
+      expect(result.user.email).toBe('new@example.org');
     });
   });
 
@@ -428,6 +448,57 @@ describe('AuthService', () => {
       expect(revokeAllForUser).toHaveBeenCalledWith('user-1');
       expect(result.refreshToken).toBe('new-refresh-token');
       expect(result.user.id).toBe('user-1');
+    });
+  });
+
+  describe('changeEmail', () => {
+    it('rejects a wrong password with 400', async () => {
+      findById.mockResolvedValue(storedUser);
+
+      await expect(
+        service.changeEmail('user-1', 'new@example.org', 'wrong'),
+      ).rejects.toBeInstanceOf(BadRequestException);
+      expect(issueVerification).not.toHaveBeenCalled();
+    });
+
+    it('rejects an already-taken address with 409', async () => {
+      findById.mockResolvedValue(storedUser);
+      findByEmail.mockResolvedValue({ ...storedUser, id: 'someone-else' });
+
+      await expect(
+        service.changeEmail('user-1', 'taken@example.org', 'secret-password'),
+      ).rejects.toBeInstanceOf(ConflictException);
+    });
+
+    it('issues a change token and mails the NEW address', async () => {
+      findById.mockResolvedValue(storedUser);
+      findByEmail.mockResolvedValue(undefined);
+      issueVerification.mockResolvedValue('raw-change-token');
+      sendMail.mockResolvedValue(undefined);
+
+      await service.changeEmail('user-1', 'new@example.org', 'secret-password');
+
+      expect(issueVerification).toHaveBeenCalledWith(
+        'user-1',
+        'new@example.org',
+      );
+      expect(sendMail).toHaveBeenCalledWith(
+        expect.objectContaining({ to: 'new@example.org' }),
+      );
+      // heads-up to the old address
+      expect(sendMail).toHaveBeenCalledWith(
+        expect.objectContaining({ to: 'admin@example.org' }),
+      );
+    });
+
+    it('stays silent when the reissue limit strikes', async () => {
+      findById.mockResolvedValue(storedUser);
+      findByEmail.mockResolvedValue(undefined);
+      issueVerification.mockResolvedValue(null);
+
+      await service.changeEmail('user-1', 'new@example.org', 'secret-password');
+
+      expect(sendMail).not.toHaveBeenCalled();
     });
   });
 });

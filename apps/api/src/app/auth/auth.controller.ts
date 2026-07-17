@@ -30,6 +30,7 @@ import { VerifyEmailDto } from './dto/verify-email.dto';
 import { ResendVerificationDto } from './dto/resend-verification.dto';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
+import { ChangeEmailDto } from './dto/change-email.dto';
 
 // Credential endpoints get a strict rate limit on top of the global one
 // (brute-force protection).
@@ -111,6 +112,19 @@ export class AuthController {
       dto.currentPassword,
       dto.newPassword,
     );
+  }
+
+  // Always 204 once authenticated + password-checked: the reissue rate
+  // limit responds identically (no token-timing signal).
+  @Post('change-email')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @UseGuards(JwtAuthGuard)
+  @Throttle(CREDENTIAL_THROTTLE)
+  async changeEmail(
+    @CurrentUser() user: JwtPayload,
+    @Body() dto: ChangeEmailDto,
+  ): Promise<void> {
+    await this.authService.changeEmail(user.sub, dto.newEmail, dto.password);
   }
 
   // Protected example — the pattern to copy for any secured endpoint.

@@ -109,7 +109,22 @@ export class AuthService {
       throw new BadRequestException('Invalid or expired verification token');
     }
 
-    await this.usersService.markEmailVerified(user.id);
+    if (stored.new_email) {
+      // Email-change confirmation: the link went to the new address, so
+      // clicking it proves ownership. The unique index has the final word —
+      // the address may have been taken since the change was requested.
+      try {
+        await this.usersService.updateEmail(user.id, stored.new_email);
+      } catch (error) {
+        if (isUniqueViolation(error)) {
+          throw new BadRequestException('Email address is no longer available');
+        }
+        throw error;
+      }
+      user.email = stored.new_email;
+    } else {
+      await this.usersService.markEmailVerified(user.id);
+    }
     await this.emailVerificationTokensService.markUsed(stored.id);
 
     // Clicking the mail link logs the user straight in.
@@ -243,6 +258,65 @@ export class AuthService {
     // fresh pair.
     await this.refreshTokensService.revokeAllForUser(userId);
     return this.issueTokenPair(this.toAuthUser(user));
+  }
+
+  async changeEmail(
+    userId: string,
+    newEmail: string,
+    password: string,
+  ): Promise<void> {
+    const user = await this.usersService.findById(userId);
+    if (!user || !verifyPassword(password, user.password_hash)) {
+      // 400, not 401 — see changePassword.
+      throw new BadRequestException('Current password is incorrect');
+    }
+    if (newEmail === user.email) {
+      throw new BadRequestException('This is already your email address');
+    }
+    if (await this.usersService.findByEmail(newEmail)) {
+      // Enumeration is acceptable here: the caller is authenticated.
+      throw new ConflictException('Email is already registered');
+    }
+
+    // null = reissued too soon — stay silent, same contract as resend.
+    const token = await this.emailVerificationTokensService.issue(
+      userId,
+      newEmail,
+    );
+    if (!token) {
+      return;
+    }
+
+    const baseUrl =
+      this.configService.get<string>('APP_BASE_URL') ?? 'http://localhost:4200';
+    const verifyUrl = `${baseUrl}/verify-email?token=${token}`;
+
+    await this.mailService
+      .send({
+        to: newEmail,
+        subject: 'Confirm your new email address',
+        text:
+          `Confirm this address to use it for your account ` +
+          `(link valid for 24 hours):\n${verifyUrl}\n\n` +
+          `If you didn't request this, ignore this mail.`,
+      })
+      .catch((error) =>
+        this.logger.error(`Email change mail to ${newEmail} failed`, error),
+      );
+
+    // Best-effort heads-up to the old address: if the change wasn't
+    // requested by the owner, they can still reset the password.
+    await this.mailService
+      .send({
+        to: user.email,
+        subject: 'Your email address is being changed',
+        text:
+          `A change of this account's email address to ${newEmail} was ` +
+          `requested. If this wasn't you, reset your password immediately.`,
+      })
+      .catch((error) =>
+        this.logger.error(`Email change notice to ${user.email} failed`, error),
+      );
   }
 
   // /auth/me reads from the DB (not the JWT) so displayName and future
