@@ -10,6 +10,7 @@ import {
 import { RouterLink } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
+import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { TranslocoPipe } from '@jsverse/transloco';
@@ -31,6 +32,7 @@ const passwordsMatch = (group: AbstractControl): ValidationErrors | null =>
     RouterLink,
     MatButtonModule,
     MatCardModule,
+    MatCheckboxModule,
     MatFormFieldModule,
     MatInputModule,
     TranslocoPipe,
@@ -51,10 +53,13 @@ export class RegisterComponent {
 
   form: FormGroup = this.fb.group(
     {
+      displayName: ['', Validators.maxLength(120)],
       email: ['', [Validators.required, Validators.email]],
       // Mirrors the API's MinLength(8) on RegisterDto
       password: ['', [Validators.required, Validators.minLength(8)]],
       passwordConfirm: ['', Validators.required],
+      // Mirrors the API's Equals(true) — GDPR consent is mandatory.
+      privacyAccepted: [false, Validators.requiredTrue],
     },
     { validators: passwordsMatch },
   );
@@ -64,15 +69,22 @@ export class RegisterComponent {
       return;
     }
     this.submitting.set(true);
-    const { email, password } = this.form.value;
-    this.auth.register({ email, password }).subscribe({
-      next: () => {
-        this.submittedEmail.set(email);
-        this.registered.set(true);
-      },
-      // errors surface via the global httpErrorInterceptor toast
-      error: () => this.submitting.set(false),
-    });
+    const { email, password, displayName, privacyAccepted } = this.form.value;
+    this.auth
+      .register({
+        email,
+        password,
+        displayName: displayName || undefined,
+        privacyAccepted,
+      })
+      .subscribe({
+        next: () => {
+          this.submittedEmail.set(email);
+          this.registered.set(true);
+        },
+        // errors surface via the global httpErrorInterceptor toast
+        error: () => this.submitting.set(false),
+      });
   }
 
   resend(): void {

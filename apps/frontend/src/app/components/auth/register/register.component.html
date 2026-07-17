@@ -7,6 +7,11 @@
       <mat-card-content>
         <form class="auth-form" [formGroup]="form" (ngSubmit)="onSubmit()">
           <mat-form-field appearance="outline">
+            <mat-label>{{ 'auth.register.displayName' | transloco }}</mat-label>
+            <input matInput type="text" formControlName="displayName" />
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
             <mat-label>{{ 'common.email' | transloco }}</mat-label>
             <input matInput type="email" formControlName="email" />
             @if (form.get('email')?.hasError('required')) {
@@ -42,6 +47,16 @@
               <mat-error>{{ 'common.passwordMismatch' | transloco }}</mat-error>
             }
           </mat-form-field>
+
+          <mat-checkbox
+            formControlName="privacyAccepted"
+            class="privacy-checkbox"
+          >
+            {{ 'auth.register.privacyPrefix' | transloco }}
+            <a [routerLink]="['/', ROUTES.PRIVACY]" target="_blank">{{
+              'auth.register.privacyLinkLabel' | transloco
+            }}</a>
+          </mat-checkbox>
 
           <button
             mat-raised-button

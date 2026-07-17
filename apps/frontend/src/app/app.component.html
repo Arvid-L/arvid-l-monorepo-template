@@ -10,7 +10,9 @@
     {{ language.active() === 'en' ? 'DE' : 'EN' }}
   </button>
   @if (auth.isLoggedIn()) {
-    <span class="user-email">{{ auth.currentUser()?.email }}</span>
+    <span class="user-email">{{
+      auth.currentUser()?.displayName || auth.currentUser()?.email
+    }}</span>
     <button mat-button (click)="auth.logout()">
       {{ 'nav.logout' | transloco }}
     </button>

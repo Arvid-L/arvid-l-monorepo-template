@@ -19,6 +19,7 @@ describe('auth flow', () => {
     cy.get('input[formcontrolname="email"]').type(email);
     cy.get('input[formcontrolname="password"]').type(password);
     cy.get('input[formcontrolname="passwordConfirm"]').type(password);
+    cy.get('mat-checkbox').click();
     cy.contains('button', 'Create account').click();
 
     cy.contains('Check your inbox').should('be.visible');
@@ -32,6 +33,7 @@ describe('auth flow', () => {
     cy.get('input[formcontrolname="email"]').type(email);
     cy.get('input[formcontrolname="password"]').type(password);
     cy.get('input[formcontrolname="passwordConfirm"]').type(password);
+    cy.get('mat-checkbox').click();
     cy.contains('button', 'Create account').click();
     cy.contains('Check your inbox').should('be.visible');
 

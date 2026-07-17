@@ -43,10 +43,12 @@ describe('RegisterComponent', () => {
 
   it('shows the check-your-inbox state after submit, without navigating', () => {
     const navigate = jest.spyOn(router, 'navigate');
-    component.form.patchValue({
+    component.form.setValue({
+      displayName: '',
       email: 'new@example.org',
       password: 'password-123',
       passwordConfirm: 'password-123',
+      privacyAccepted: true,
     });
 
     component.onSubmit();
@@ -54,6 +56,8 @@ describe('RegisterComponent', () => {
     expect(mockAuthService.register).toHaveBeenCalledWith({
       email: 'new@example.org',
       password: 'password-123',
+      displayName: undefined,
+      privacyAccepted: true,
     });
     expect(component.registered()).toBe(true);
     expect(component.submittedEmail()).toBe('new@example.org');
@@ -68,12 +72,25 @@ describe('RegisterComponent', () => {
       email: 'taken@example.org',
       password: 'password-123',
       passwordConfirm: 'password-123',
+      privacyAccepted: true,
     });
 
     component.onSubmit();
 
     expect(component.registered()).toBe(false);
     expect(component.submitting()).toBe(false);
+  });
+
+  it('keeps the form invalid until the privacy checkbox is accepted', () => {
+    component.form.patchValue({
+      email: 'new@example.org',
+      password: 'password-123',
+      passwordConfirm: 'password-123',
+    });
+    expect(component.form.valid).toBe(false);
+
+    component.form.patchValue({ privacyAccepted: true });
+    expect(component.form.valid).toBe(true);
   });
 
   it('resend calls the API and enters cooldown', () => {
