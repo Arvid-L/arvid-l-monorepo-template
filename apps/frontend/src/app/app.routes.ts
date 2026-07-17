@@ -7,9 +7,11 @@ import {
   ResetPasswordComponent,
   VerifyEmailComponent,
 } from './components/auth';
+import { AdminUsersComponent } from './components/admin';
 import { ImprintComponent, PrivacyComponent } from './components/legal';
 import { NotFoundComponent } from './components/not-found/not-found.component';
 import { SettingsComponent } from './components/settings/settings.component';
+import { adminGuard } from './core/auth/admin.guard';
 import { authGuard } from './core/auth/auth.guard';
 import { ROUTES } from './core/constants/routes.constants';
 
@@ -53,6 +55,11 @@ export const appRoutes: Route[] = [
     path: ROUTES.SETTINGS,
     component: SettingsComponent,
     canActivate: [authGuard],
+  },
+  {
+    path: ROUTES.ADMIN_USERS,
+    component: AdminUsersComponent,
+    canActivate: [adminGuard],
   },
   {
     // The old '**' redirect doubled as the root route — keep '/' working

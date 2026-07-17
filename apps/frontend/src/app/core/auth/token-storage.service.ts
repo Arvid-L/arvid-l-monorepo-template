@@ -17,6 +17,23 @@ export class TokenStorageService {
     return this.token !== null;
   }
 
+  // Reads the role claim from the stored access token (base64url payload).
+  // UI-gating only — the API enforces roles server-side on every request.
+  get role(): string | null {
+    const token = this.token;
+    if (!token) {
+      return null;
+    }
+    try {
+      const payload = JSON.parse(
+        atob(token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')),
+      );
+      return typeof payload.role === 'string' ? payload.role : null;
+    } catch {
+      return null;
+    }
+  }
+
   store(accessToken: string, refreshToken: string): void {
     localStorage.setItem(ACCESS_TOKEN_KEY, accessToken);
     localStorage.setItem(REFRESH_TOKEN_KEY, refreshToken);

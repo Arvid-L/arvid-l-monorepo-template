@@ -5,6 +5,7 @@ import {
   LoginDto,
   RegisterDto,
   RegisterResponse,
+  UserRole,
 } from '@arvid-l-monorepo-template/shared';
 import { Observable, tap } from 'rxjs';
 import { ROUTES } from '../constants/routes.constants';
@@ -22,6 +23,9 @@ export class AuthService {
 
   readonly currentUser = signal<AuthUser | null>(null);
   readonly isLoggedIn = computed(() => this.currentUser() !== null);
+  readonly isAdmin = computed(
+    () => this.currentUser()?.role === UserRole.ADMIN,
+  );
 
   constructor() {
     // Restore the session after a page reload: tokens survive in storage,

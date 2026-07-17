@@ -10,6 +10,11 @@
     {{ language.active() === 'en' ? 'DE' : 'EN' }}
   </button>
   @if (auth.isLoggedIn()) {
+    @if (auth.isAdmin()) {
+      <a mat-button [routerLink]="['/', ROUTES.ADMIN_USERS]">{{
+        'nav.users' | transloco
+      }}</a>
+    }
     <a mat-button [routerLink]="['/', ROUTES.SETTINGS]">{{
       'nav.settings' | transloco
     }}</a>

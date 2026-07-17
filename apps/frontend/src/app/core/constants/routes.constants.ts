@@ -12,4 +12,5 @@ export const ROUTES = {
   IMPRINT: 'imprint',
   PRIVACY: 'privacy',
   SETTINGS: 'settings',
+  ADMIN_USERS: 'admin/users',
 };
