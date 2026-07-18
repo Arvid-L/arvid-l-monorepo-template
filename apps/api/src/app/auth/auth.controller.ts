@@ -41,8 +41,15 @@ import { UpdateUserStatusDto } from './dto/update-user-status.dto';
 import { PageQueryDto } from '../../common/pagination/page-query.dto';
 
 // Credential endpoints get a strict rate limit on top of the global one
-// (brute-force protection).
-const CREDENTIAL_THROTTLE = { default: { limit: 5, ttl: 60_000 } };
+// (brute-force protection). THROTTLE_CREDENTIAL_LIMIT is only meant for
+// .env.e2e — the Cypress suite logs in more often per minute than the
+// human-scale default of 5 allows.
+const CREDENTIAL_THROTTLE = {
+  default: {
+    limit: parseInt(process.env.THROTTLE_CREDENTIAL_LIMIT ?? '5', 10),
+    ttl: 60_000,
+  },
+};
 
 @Controller('auth')
 export class AuthController {

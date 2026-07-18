@@ -48,6 +48,20 @@ The example feature (CRUD list at the FE root) proves DB → API → shared type
 conventions); replace the example slice when you no longer need the
 reference.
 
+> **Language note:** the default UI language is `en`. For a German-first
+> project set `defaultLang: 'de'` in `apps/frontend/src/app/app.config.ts`
+> (Transloco config). All UI strings live in `apps/frontend/public/i18n/` —
+> add languages by dropping another `<lang>.json` there.
+
+## 2b. Replace the legal placeholders
+
+The footer links to `/imprint` and `/privacy`, which ship with placeholder
+text. Replace `legal.imprint.body` and `legal.privacy.body` in **both**
+`apps/frontend/public/i18n/en.json` and `de.json` with your real Impressum
+(§ 5 DDG — legally required in Germany) and privacy policy (GDPR Art.
+13/14) before going live. The register form requires consent to the privacy
+policy, so don't launch with the placeholder.
+
 ## 3. DNS
 
 Create an **A record**: `somenewproject.com` → your server's IPv4. Do it now

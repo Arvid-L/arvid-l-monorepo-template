@@ -101,6 +101,23 @@ For "branch off and go fast," the biggest friction is renaming everything. Add:
 - [x] **DB backups** — `scripts/backup-db.sh` (gzipped pg_dump, rotation, optional `BACKUP_REMOTE` push) + `restore-db.sh` (confirmed destructive, stops API). Round-trip verified locally: backup → delete users → restore → login OK. Cron install in HETZNER-SETUP.md §7.
 - [x] **Migrator silent-death fix** — `process.exit(1)` right after an async pino log swallowed migration errors (container restart-looped with zero output). Now throws; the rejection prints synchronously.
 
+### Tier-2 round (2026-07-18, all verified: unit tests + full e2e suite green)
+
+Account settings, admin user management, pagination convention, legal pages, i18n.
+
+- [x] **i18n (Transloco)** — en + de under `apps/frontend/public/i18n/`, toolbar language toggle, `getTranslocoTestingModule()` preloads real English copy so component specs keep asserting visible strings; MatPaginator labels localized app-wide via a `MatPaginatorIntl` bridge.
+- [x] **Legal pages + 404 + footer** — `/imprint` + `/privacy` placeholder pages (copy lives in the i18n files — downstream projects must replace it, see NEW-PROJECT.md §2b), wildcard 404 route, footer links.
+- [x] **Pagination convention** — shared `PageRequest`/`PageResponse`, API-side `PageQueryDto` + `resolveSort` with a per-feature column whitelist (guarded against prototype-chain keys), example slice = reference implementation; FE example list uses MatPaginator.
+- [x] **Registration extras** — optional display name + mandatory privacy-consent checkbox (stored as `privacy_consented_at`; register links to `/privacy`); toolbar shows `displayName || email`; `PATCH /auth/profile`, DB-backed `GET /auth/me`.
+- [x] **Account self-service** (`/settings`) — change password, change email, delete account. Key decisions:
+  - **400-vs-401 rule:** a wrong password on an _authenticated_ endpoint returns 400, never 401 — a 401 would make the FE interceptor try a token refresh and log the user out mid-form.
+  - **Change email** sends the verification link to the NEW address; the email only flips once the link is clicked (no takeover via typo, old address keeps working until then). Change password revokes all _other_ sessions and returns a fresh token pair.
+  - **Delete account = hard delete** (not `deleted_at`): GDPR erasure, and a soft-deleted row would squat on the unique email index forever. All token tables cascade on the user FK, so one `DELETE FROM users` erases everything.
+- [x] **Admin user management** — paginated `GET /auth/users` (default sort `createdAt desc` so fresh accounts are on page 1), `PATCH /auth/users/:id/role` + `/status`, self-change guarded (an admin cannot demote/disable themselves); disabled accounts get 403 `ACCOUNT_DISABLED` on login/verify/change-password. FE `/admin/users` table with role select + disable/enable; **`adminGuard` reads the role from the stored JWT synchronously** (no race with the async `/auth/me` session restore) — UI-gating only, the API enforces.
+- [x] **E2E round** (settings + admin specs) — surfaced two real issues, both fixed:
+  - **Multi-segment routerLink bug:** `[routerLink]="['/', 'admin/users']"` 404s — the Angular router only splits the FIRST commands-array element on `/`, later elements become ONE segment (`/admin%2Fusers`). Fix: single-string form `[routerLink]="'/' + ROUTES.ADMIN_USERS"`; regression unit test pins the href.
+  - **Credential throttle vs e2e:** the suite makes more login requests per minute than the 5/min brute-force limit allows. New optional `THROTTLE_CREDENTIAL_LIMIT` env var (default 5) raised to 100 in `.env.e2e` only — nx auto-loads `.env.e2e` (workspace-root `.env.<target>`) into the whole e2e task tree, which is also how the e2e API gets its test-DB config.
+
 ### Deferred — pick up when the trigger hits
 
 1. **Jest coverage thresholds** — skipped by choice for now.

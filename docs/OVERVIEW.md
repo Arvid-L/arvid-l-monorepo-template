@@ -1,4 +1,4 @@
-# Template Overview — state as of 2026-07-13 (evening)
+# Template Overview — state as of 2026-07-18
 
 One-page tour of `arvid-l-monorepo-template`. Everything below is implemented,
 tested and **proven on a real deploy** (arvidlin.de, Hetzner CX23).
@@ -44,7 +44,21 @@ one-command HTTPS. Branch → rename → deploy in under an hour.
 - **Password reset:** forgot/reset endpoints (single-use hashed tokens, 1h,
   resets kill all sessions), mail via nodemailer — without SMTP\_\* env the
   mail lands in the log, so the flow works in dev out of the box
+- **Account self-service:** change password (revokes all other sessions,
+  returns a fresh token pair), change email (verification link goes to the
+  NEW address — the email only flips once the link is clicked), delete
+  account (hard delete; FK cascade erases all tokens — GDPR erasure, not a
+  soft delete)
+- **Admin endpoints:** paginated `GET /auth/users`, `PATCH
+/auth/users/:id/role` + `/status` (self-change guarded — an admin cannot
+  demote or disable themselves); disabled accounts are rejected with 403 +
+  `errorCode: ACCOUNT_DISABLED` at login and on token use
+- **Pagination convention:** shared `PageRequest`/`PageResponse` + API-side
+  `PageQueryDto` and a `resolveSort` column whitelist per feature — the
+  example slice is the reference implementation
 - Rate limiting: 100/min per IP global, 5/min on credential endpoints
+  (`THROTTLE_CREDENTIAL_LIMIT` raises it in `.env.e2e` only — the Cypress
+  suite logs in faster than a human)
 - Daily cron purges expired tokens (`@nestjs/schedule` wired)
 
 **Frontend baseline**
@@ -53,7 +67,21 @@ one-command HTTPS. Branch → rename → deploy in under an hour.
 - **Auth UI:** login / register / forgot-password / reset-password /
   verify-email pages (Material), toolbar with session state, `authGuard`
   with returnUrl; register ends in a "check your inbox" state with resend
-  cooldown, login offers resend on unverified accounts
+  cooldown, login offers resend on unverified accounts; register asks for
+  an optional display name + a mandatory privacy-policy consent checkbox
+  (links to `/privacy`); the toolbar shows `displayName || email`
+- **Settings page** (`/settings`): profile (display name), change password,
+  change email, delete account — one card per concern
+- **Admin users page** (`/admin/users`): paginated table with role select
+  and disable/enable; `adminGuard` reads the role straight from the stored
+  JWT (synchronous — no race with the async session restore), toolbar link
+  renders for admins only; the API enforces regardless
+- **i18n:** Transloco with en + de, toolbar language toggle, every UI
+  string lives in `public/i18n/*.json`; `getTranslocoTestingModule()` keeps
+  component specs asserting real English copy; MatPaginator labels are
+  localized app-wide via a `MatPaginatorIntl` bridge
+- **Legal pages + 404 + footer:** `/imprint` + `/privacy` (placeholder
+  copy — replace per project), wildcard 404 page, footer links on every page
 - Token storage, Bearer interceptor with silent single-flight
   refresh-on-401, session restore after reload via `/auth/me`
 

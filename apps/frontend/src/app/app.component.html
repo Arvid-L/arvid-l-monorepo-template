@@ -11,7 +11,11 @@
   </button>
   @if (auth.isLoggedIn()) {
     @if (auth.isAdmin()) {
-      <a mat-button [routerLink]="['/', ROUTES.ADMIN_USERS]">{{
+      <!-- Single-string form: ADMIN_USERS is multi-segment ('admin/users')
+           and the router only splits the FIRST commands-array element on
+           '/'. As a later element it would be one segment → /admin%2Fusers
+           → 404 (caught by admin.cy.ts). -->
+      <a mat-button [routerLink]="'/' + ROUTES.ADMIN_USERS">{{
         'nav.users' | transloco
       }}</a>
     }

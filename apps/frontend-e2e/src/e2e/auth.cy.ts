@@ -82,4 +82,35 @@ describe('auth flow', () => {
     cy.contains('Link invalid or expired').should('be.visible');
     cy.contains('button', 'Resend verification mail').should('be.visible');
   });
+
+  it('lets a user change their password in settings', () => {
+    const email = `settings-${Date.now()}@e2e.local`;
+    createVerifiedUser(email);
+
+    cy.visit('/login');
+    cy.get('input[formcontrolname="email"]').type(email);
+    cy.get('input[formcontrolname="password"]').type(password);
+    cy.contains('button', 'Login').click();
+    cy.contains('.user-email', email).should('be.visible');
+
+    cy.contains('a', 'Settings').click();
+    cy.get('.password-form input[formcontrolname="currentPassword"]').type(
+      password,
+    );
+    cy.get('.password-form input[formcontrolname="newPassword"]').type(
+      'password-2',
+    );
+    cy.get('.password-form input[formcontrolname="newPasswordConfirm"]').type(
+      'password-2',
+    );
+    cy.get('.password-form button[type=submit]').click();
+    cy.contains('Password changed').should('be.visible');
+
+    cy.contains('button', 'Logout').click();
+
+    cy.get('input[formcontrolname="email"]').type(email);
+    cy.get('input[formcontrolname="password"]').type('password-2');
+    cy.contains('button', 'Login').click();
+    cy.contains('.user-email', email).should('be.visible');
+  });
 });

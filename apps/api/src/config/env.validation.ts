@@ -102,6 +102,14 @@ export class EnvironmentVariables {
   @IsOptional()
   @IsString()
   MAIL_FROM?: string;
+
+  // Strict per-IP limit on credential endpoints (login, register, …) per
+  // minute (default: 5). Raised in .env.e2e only — the Cypress suite makes
+  // more login requests per minute than any human should.
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  THROTTLE_CREDENTIAL_LIMIT?: number;
 }
 
 export function validateEnv(
