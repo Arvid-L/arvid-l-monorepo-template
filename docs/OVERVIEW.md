@@ -52,7 +52,9 @@ one-command HTTPS. Branch → rename → deploy in under an hour.
 - **Admin endpoints:** paginated `GET /auth/users`, `PATCH
 /auth/users/:id/role` + `/status` (self-change guarded — an admin cannot
   demote or disable themselves); disabled accounts are rejected with 403 +
-  `errorCode: ACCOUNT_DISABLED` at login and on token use
+  `errorCode: ACCOUNT_DISABLED` at login, email-verify and change-password;
+  refresh of a disabled account fails like an invalid token (generic 401);
+  already-issued access tokens stay valid until expiry (≤15m)
 - **Pagination convention:** shared `PageRequest`/`PageResponse` + API-side
   `PageQueryDto` and a `resolveSort` column whitelist per feature — the
   example slice is the reference implementation

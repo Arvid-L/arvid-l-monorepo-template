@@ -108,15 +108,26 @@ Account settings, admin user management, pagination convention, legal pages, i18
 - [x] **i18n (Transloco)** — en + de under `apps/frontend/public/i18n/`, toolbar language toggle, `getTranslocoTestingModule()` preloads real English copy so component specs keep asserting visible strings; MatPaginator labels localized app-wide via a `MatPaginatorIntl` bridge.
 - [x] **Legal pages + 404 + footer** — `/imprint` + `/privacy` placeholder pages (copy lives in the i18n files — downstream projects must replace it, see NEW-PROJECT.md §2b), wildcard 404 route, footer links.
 - [x] **Pagination convention** — shared `PageRequest`/`PageResponse`, API-side `PageQueryDto` + `resolveSort` with a per-feature column whitelist (guarded against prototype-chain keys), example slice = reference implementation; FE example list uses MatPaginator.
-- [x] **Registration extras** — optional display name + mandatory privacy-consent checkbox (stored as `privacy_consented_at`; register links to `/privacy`); toolbar shows `displayName || email`; `PATCH /auth/profile`, DB-backed `GET /auth/me`.
+- [x] **Registration extras** — optional display name + mandatory privacy-consent checkbox (stored as `privacy_accepted_at`; register links to `/privacy`); toolbar shows `displayName || email`; `PATCH /auth/profile`, DB-backed `GET /auth/me`.
 - [x] **Account self-service** (`/settings`) — change password, change email, delete account. Key decisions:
   - **400-vs-401 rule:** a wrong password on an _authenticated_ endpoint returns 400, never 401 — a 401 would make the FE interceptor try a token refresh and log the user out mid-form.
   - **Change email** sends the verification link to the NEW address; the email only flips once the link is clicked (no takeover via typo, old address keeps working until then). Change password revokes all _other_ sessions and returns a fresh token pair.
   - **Delete account = hard delete** (not `deleted_at`): GDPR erasure, and a soft-deleted row would squat on the unique email index forever. All token tables cascade on the user FK, so one `DELETE FROM users` erases everything.
+  - **Disabled users may still self-delete** (deliberate, decided at final review): `delete-account` has no `disabled_at` gate, so a banned user can erase their account within their remaining access-token window (≤15m). GDPR-friendly — the right to erasure survives a ban. Downstream projects that need a moderation audit trail add the same 403 gate used in `change-password`.
 - [x] **Admin user management** — paginated `GET /auth/users` (default sort `createdAt desc` so fresh accounts are on page 1), `PATCH /auth/users/:id/role` + `/status`, self-change guarded (an admin cannot demote/disable themselves); disabled accounts get 403 `ACCOUNT_DISABLED` on login/verify/change-password. FE `/admin/users` table with role select + disable/enable; **`adminGuard` reads the role from the stored JWT synchronously** (no race with the async `/auth/me` session restore) — UI-gating only, the API enforces.
 - [x] **E2E round** (settings + admin specs) — surfaced two real issues, both fixed:
   - **Multi-segment routerLink bug:** `[routerLink]="['/', 'admin/users']"` 404s — the Angular router only splits the FIRST commands-array element on `/`, later elements become ONE segment (`/admin%2Fusers`). Fix: single-string form `[routerLink]="'/' + ROUTES.ADMIN_USERS"`; regression unit test pins the href.
   - **Credential throttle vs e2e:** the suite makes more login requests per minute than the 5/min brute-force limit allows. New optional `THROTTLE_CREDENTIAL_LIMIT` env var (default 5) raised to 100 in `.env.e2e` only — nx auto-loads `.env.e2e` (workspace-root `.env.<target>`) into the whole e2e task tree, which is also how the e2e API gets its test-DB config.
+
+### Tier-2 polish backlog (from the final whole-branch review — all small, batch in one sitting)
+
+- Extract a private `assertNotDisabled(user)` in `auth.service.ts` (the ACCOUNT_DISABLED throw block is copy-pasted 3×) and a `verifyUrl` helper (duplicated between `sendVerificationMail`/`changeEmail`).
+- Shared `matchFields(a, b)` cross-field validator in `core/` (passwordsMatch is copy-pasted in register/reset-password/settings) and a `toPageParams(request)` helper for the FE api services (align default pageSize on 20 — example service says 10, admin says 20, API says 20).
+- Wire `auth.register.privacyRequired` (exists in both i18n files, referenced nowhere) into a mat-error on the consent checkbox.
+- Clamp/reset `pageIndex` when `onDelete` empties a later page (example list shows "No examples found" over a non-empty dataset).
+- Shared list/count base-query builder per paginated service (the `deleted_at is null` filter is duplicated between the two queries — a WHERE added to one but not the other yields wrong totals).
+- Missing small tests: LanguageService unit test; sort/order through `ExampleService.findAll`; `changeEmail` same-address 400 branch; unique-violation race remap in `verifyEmail`; positive disabled-login toast assertion in `admin.cy.ts` (current check is negative-only).
+- Idea, when i18n matters downstream: map known API `errorCode`s (ACCOUNT_DISABLED, EMAIL_NOT_VERIFIED) to Transloco keys in the HTTP-error interceptor — server messages currently toast in English regardless of UI language.
 
 ### Deferred — pick up when the trigger hits
 
