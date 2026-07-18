@@ -46,7 +46,9 @@ import { PageQueryDto } from '../../common/pagination/page-query.dto';
 // human-scale default of 5 allows.
 const CREDENTIAL_THROTTLE = {
   default: {
-    limit: parseInt(process.env.THROTTLE_CREDENTIAL_LIMIT ?? '5', 10),
+    // `||` (not `??`): compose passes unset optionals as empty strings,
+    // and parseInt('') is NaN — which would disable the limit entirely.
+    limit: parseInt(process.env.THROTTLE_CREDENTIAL_LIMIT || '5', 10),
     ttl: 60_000,
   },
 };
