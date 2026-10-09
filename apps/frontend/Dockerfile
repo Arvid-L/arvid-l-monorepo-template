@@ -3,12 +3,14 @@ FROM node:22-alpine AS builder
 WORKDIR /app
 RUN apk add --no-cache libc6-compat
 
-COPY package.json package-lock.json ./
-RUN npm ci
+# Install the pnpm version pinned in package.json's "packageManager"
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+RUN npm install -g "$(node -p 'require("./package.json").packageManager')" \
+  && pnpm install --frozen-lockfile
 
 COPY . .
 ENV NX_DAEMON=false
-RUN npx nx build frontend
+RUN pnpm exec nx build frontend
 
 # Runtime stage — nginx serving the static bundle with SPA fallback.
 # This is the app-internal nginx; the public-facing reverse proxy lives

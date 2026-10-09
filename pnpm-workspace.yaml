@@ -1,0 +1,27 @@
+# pnpm settings (pnpm 11+ reads project settings from this file, not .npmrc).
+# No `packages` list: this is a single-package repo, nx handles the projects.
+
+# Dependency build scripts pnpm may run. Anything not listed fails the install
+# (strictDepBuilds), so a new native dependency has to be reviewed here.
+allowBuilds:
+  '@parcel/watcher': true
+  '@swc/core': true
+  cypress: true
+  esbuild: true
+  fsevents: true
+  lmdb: true
+  msgpackr-extract: true
+  nx: true
+  unrs-resolver: true
+  # telemetry ping only
+  '@scarf/scarf': false
+  # opencollective donation banner only (dropped in later 11.x releases)
+  '@nestjs/core': false
+  # flagged by pnpm, but ships no install script it needs
+  less: false
+
+# Keep "packageManager" in package.json as the version pin (CI, Dockerfiles)
+# but don't let pnpm manage it: otherwise pnpm 11+ prepends a second YAML
+# document (packageManagerDependencies) to pnpm-lock.yaml, which nx's lockfile
+# parser rejects ("expected a single document in the stream").
+pmOnFail: ignore

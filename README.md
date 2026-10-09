@@ -8,8 +8,8 @@ use it, what's deliberately missing (5-minute read).
 
 ```bash
 git clone <this-repo> my-project && cd my-project
-npm ci
-npm run init-project -- my-project --reset-git
+pnpm install
+pnpm run init-project my-project --reset-git
 ```
 
 Then follow [docs/NEW-PROJECT.md](docs/NEW-PROJECT.md) — the complete path
@@ -30,26 +30,30 @@ from branch-off to the app running on your domain with HTTPS.
 ## How to run
 
 ```
-npm i
-npm run serve:all
+pnpm install
+pnpm run serve:all
 ```
+
+Uses pnpm (version pinned in `package.json` `packageManager`). In a checkout
+that still has an npm-installed `node_modules`, delete it first
+(`rm -rf node_modules`); pnpm refuses to replace it without a terminal prompt.
 
 Or if you want to run them separately:
 
 ```
-nx serve api
-nx serve frontend
+pnpm exec nx serve api
+pnpm exec nx serve frontend
 ```
 
 For quality check (tests, build, linting):
 
 ```
-npm run quality
+pnpm run quality
 
 # or separately
-npm run test
-npm run lint
-npm run build
+pnpm run test
+pnpm run lint
+pnpm run build
 ```
 
 ## Local development

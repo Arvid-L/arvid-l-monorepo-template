@@ -5,8 +5,8 @@
       "type": "node",
       "request": "launch",
       "name": "Debug api with Nx",
-      "runtimeExecutable": "npx",
-      "runtimeArgs": ["nx", "serve", "api"],
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": ["exec", "nx", "serve", "api"],
       "env": {
         "NODE_OPTIONS": "--inspect=9229"
       },
@@ -23,8 +23,8 @@
       "type": "node",
       "request": "launch",
       "name": "Debug api with Nx",
-      "runtimeExecutable": "npx",
-      "runtimeArgs": ["nx", "serve", "api"],
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": ["exec", "nx", "serve", "api"],
       "env": {
         "NODE_OPTIONS": "--inspect=9230"
       },

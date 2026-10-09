@@ -9,7 +9,7 @@ describe('auth flow', () => {
   const createVerifiedUser = (email: string) =>
     cy.exec(
       `cd "$(git rev-parse --show-toplevel)" && ` +
-        `npx tsx tools/scripts/create-user.ts ${email} ${password}`,
+        `pnpm exec tsx tools/scripts/create-user.ts ${email} ${password}`,
     );
 
   it('registration ends on the check-your-inbox screen, not logged in', () => {

@@ -1,6 +1,7 @@
 # Node modules
 node_modules
 npm-debug.log
+pnpm-debug.log
 
 # Nx cache
 .nx

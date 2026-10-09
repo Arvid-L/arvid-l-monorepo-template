@@ -7,7 +7,7 @@ propagation).
 Running example below: project **somenewproject**, domain
 **somenewproject.com**. Substitute your own everywhere.
 
-**Prerequisites:** Node 22 + Docker locally · a domain · a Hetzner Cloud
+**Prerequisites:** Node 22 + pnpm (version pinned in `package.json` `packageManager`) + Docker locally · a domain · a Hetzner Cloud
 server (smallest CX works) created with your SSH key · an empty remote git
 repo (GitHub etc.).
 
@@ -16,8 +16,8 @@ repo (GitHub etc.).
 ```bash
 git clone <template-repo-url> somenewproject
 cd somenewproject
-npm ci
-npm run init-project -- somenewproject --reset-git
+pnpm install
+pnpm run init-project somenewproject --reset-git
 ```
 
 The script rewrites the npm scope (`@somenewproject/shared`), nx project
@@ -38,9 +38,9 @@ Housekeeping: rewrite the `README.md` intro for your project, adapt
 ## 2. Verify + develop locally
 
 ```bash
-npm run quality        # lint + test + build — must be green
+pnpm run quality        # lint + test + build — must be green
 docker compose up -d   # dev DB :5432, e2e test DB :5433
-npm run serve:all      # api → localhost:3000/api, frontend → localhost:4200
+pnpm run serve:all      # api → localhost:3000/api, frontend → localhost:4200
 ```
 
 The example feature (CRUD list at the FE root) proves DB → API → shared types
@@ -127,7 +127,7 @@ If your domain is registered at Hetzner you already have webhosting mail:
 3. DNS: Hetzner's default SPF record (`v=spf1 +a +mx ?all`) already covers
    their mail servers. Enable DKIM in konsoleH if the option exists for
    your package.
-4. Verify: `npm run mail:test -- you@somewhere.com` → mail arrives.
+4. Verify: `pnpm run mail:test you@somewhere.com` → mail arrives.
 
 Any transactional provider (Brevo, Resend, ...) works identically — swap
 the `SMTP_*` values.
@@ -166,7 +166,7 @@ Everyone who registers gets the `user` role. Create your admin account once, on 
 ```bash
 ssh root@somenewproject.com 'cd /opt/somenewproject && \
   DATABASE_HOST=127.0.0.1 DATABASE_NAME=... DATABASE_USER=... DATABASE_PASSWORD=... \
-  npx tsx tools/scripts/create-user.ts you@somewhere.com <password> admin'
+  pnpm exec tsx tools/scripts/create-user.ts you@somewhere.com <password> admin'
 ```
 
 Protect API endpoints with `@UseGuards(JwtAuthGuard, RolesGuard)` +

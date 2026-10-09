@@ -14,12 +14,15 @@ jobs:
           # nx affected needs history to diff against the base branch
           fetch-depth: 0
 
+      # pnpm version comes from "packageManager" in package.json
+      - uses: pnpm/action-setup@v6
+
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: npm
+          cache: pnpm
 
-      - run: npm ci
+      - run: pnpm install --frozen-lockfile
         env:
           CYPRESS_INSTALL_BINARY: '0'
 
@@ -29,7 +32,7 @@ jobs:
       # this size and a fresh repo has no base commit for affected to diff.
       - run: |
           if [ "${{ github.event_name }}" = "pull_request" ]; then
-            npx nx affected -t lint test build
+            pnpm exec nx affected -t lint test build
           else
-            npx nx run-many -t lint test build
+            pnpm exec nx run-many -t lint test build
           fi

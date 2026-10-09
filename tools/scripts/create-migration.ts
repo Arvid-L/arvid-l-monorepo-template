@@ -3,7 +3,9 @@ import * as path from 'path';
 
 const migrationName = process.argv[2];
 if (!migrationName) {
-  console.error('Usage: npm run migration:create <migration-name>');
+  console.error(
+    'Usage: pnpm exec nx run api:create-migration -- <migration-name>',
+  );
   process.exit(1);
 }
 

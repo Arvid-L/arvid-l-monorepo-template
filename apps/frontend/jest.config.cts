@@ -14,7 +14,11 @@ module.exports = {
   },
   // @jsverse/* ships an ESM-only "index.esm.js" (not ".mjs"), so the
   // default "*.mjs$" carve-out misses it and Jest chokes on `export`.
-  transformIgnorePatterns: ['node_modules/(?!.*\\.mjs$|@jsverse)'],
+  // pnpm puts the real files under node_modules/.pnpm/@jsverse+<pkg>@<v>/,
+  // hence the second spelling.
+  transformIgnorePatterns: [
+    'node_modules/(?!.*\\.mjs$|@jsverse|\\.pnpm/@jsverse\\+)',
+  ],
   snapshotSerializers: [
     'jest-preset-angular/build/serializers/no-ng-attributes',
     'jest-preset-angular/build/serializers/ng-snapshot',

@@ -4,7 +4,7 @@ import { config } from 'dotenv';
 import { resolve } from 'path';
 
 // Seeds the dev database with example rows. Idempotent: does nothing when
-// the table already has data. Extend per project (npm run db:seed).
+// the table already has data. Extend per project (pnpm run db:seed).
 // Requires the schema to exist — start the API once first (migrations run
 // on boot).
 config({ path: resolve(__dirname, '../../.env.dev') });

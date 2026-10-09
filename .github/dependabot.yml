@@ -1,5 +1,7 @@
 version: 2
 updates:
+  # "npm" is also the ecosystem for pnpm: Dependabot detects pnpm-lock.yaml
+  # and updates it.
   - package-ecosystem: npm
     directory: /
     schedule:

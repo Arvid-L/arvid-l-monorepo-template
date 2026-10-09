@@ -28,7 +28,7 @@
 
 The template today can only run a dev DB. None of the production containerization exists. Port + generalize from Ecclesio (`~/dev/ecclesio`), which has working versions of all of this.
 
-- [x] **`apps/api/Dockerfile`** — multi-stage. Note: the planned `prune-lockfile`/`copy-workspace-modules` targets were broken AND redundant (webpack's `generatePackageJson: true` already emits a pruned `package.json`/`package-lock.json` into `dist/apps/api`, shared lib is bundled into `main.js`); those targets were removed. Runtime = `node:22-alpine`, `npm ci --omit=dev` against the generated package files, `CMD ["node","main.js"]`.
+- [x] **`apps/api/Dockerfile`** — multi-stage. Note: the planned `prune-lockfile`/`copy-workspace-modules` targets were broken AND redundant (webpack's `generatePackageJson: true` already emits a pruned `package.json`/`pnpm-lock.yaml` into `dist/apps/api`, shared lib is bundled into `main.js`); those targets were removed. Runtime = `node:22-alpine`, `pnpm install --prod --frozen-lockfile` against the generated package files (see the Dockerfile comments for the `packageManager` workaround), `CMD ["node","main.js"]`.
 - [x] **`apps/frontend/Dockerfile`** — multi-stage, runtime `nginx:alpine` + SPA-fallback conf (`apps/frontend/nginx.conf`).
 - [x] **`docker-compose.prod.yml`** — postgres + api + frontend + nginx + certbot (tls profile). Parametrized via `PROJECT_NAME`/`ENV_NAME`, DB bound to `127.0.0.1`, healthchecks wired (use `127.0.0.1` in-container, not `localhost` — busybox wget prefers ::1).
 - [x] **`infrastructure/nginx/`** — two envsubst template sets rendered by the stock nginx image: `templates-http` (local smoke test + pre-TLS bootstrap) and `templates-tls` (redirect + 443 with `${DOMAIN}` certs). Switched via `NGINX_TEMPLATES` in `.env.production`.
@@ -67,7 +67,7 @@ These make the base worth branching from. Ship the wiring + a tiny example, not 
 - [x] **`.vscode/extensions.json`** — nx-console, angular, eslint, prettier, jest-runner, tailwind.
 - [x] **Frontend baseline** — ToastService (MatSnackBar), global functional `httpErrorInterceptor` (components keep success toasts; errors toast once globally), Material 3 theme (was already wired), Tailwind v4 via `@tailwindcss/postcss`. Note: `provideHttpClient` was absent before this — that _works_ in Angular 21 (HttpClient/HttpHandler are `providedIn: 'root'`, verified in framework source + live-site logs), but interceptors require the explicit `provideHttpClient(withInterceptors([...]))` in app.config. e2e spec rewritten to cover the example CRUD round-trip — run it (`nx e2e frontend-e2e`) before calling FE work done. Runtime-config (one build, all envs) still open/optional.
 - [x] **Shared baseline** — `PaginationRequest`/`PaginatedResponse` + `ErrorCode` enum, mapped into the exception filter's `ErrorResponse.errorCode`.
-- [x] **Seed mechanism** — `npm run db:seed` (idempotent, tools/scripts/seed.ts).
+- [x] **Seed mechanism** — `pnpm run db:seed` (idempotent, tools/scripts/seed.ts).
 
 ---
 
@@ -75,7 +75,7 @@ These make the base worth branching from. Ship the wiring + a tiny example, not 
 
 For "branch off and go fast," the biggest friction is renaming everything. Add:
 
-- [x] **`tools/scripts/init-project.ts`** — `npm run init-project -- <name> [--reset-git]`: rewrites kebab/Pascal/Title forms of the template name across every text file (npm scope + imports, tsconfig paths, container/DB/volume names, deploy defaults, titles incl. package-lock), optional fresh git history. Documented in README + `docs/NEW-PROJECT.md` (full branch-off → live-HTTPS walkthrough).
+- [x] **`tools/scripts/init-project.ts`** — `pnpm run init-project <name> [--reset-git]`: rewrites kebab/Pascal/Title forms of the template name across every text file (npm scope + imports, tsconfig paths, container/DB/volume names, deploy defaults, titles incl. pnpm-lock), optional fresh git history. Documented in README + `docs/NEW-PROJECT.md` (full branch-off → live-HTTPS walkthrough).
 
   **Verified 2026-07-12:** ran in a clean clone (`somenewproject --reset-git`) — zero leftover occurrences, `nx run-many -t lint test build` green in the renamed repo, no `npm ci` re-run needed. Also fixed: `tsx` was never a devDep although `create-migration` requires it.
 

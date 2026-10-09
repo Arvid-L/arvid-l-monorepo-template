@@ -87,7 +87,7 @@ export class AuthService {
   // Open registration — every new account gets the USER role and starts
   // unverified: no tokens until the mailed link is clicked (hard gate).
   // Admins and moderators are promoted via
-  // `npm run user:create -- <email> <pw> <role>` or a future admin UI.
+  // `pnpm run user:create <email> <pw> <role>` or a future admin UI.
   async register(dto: RegisterDto): Promise<RegisterResponse> {
     try {
       const user = await this.usersService.create({

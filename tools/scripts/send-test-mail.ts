@@ -3,7 +3,7 @@ import { config } from 'dotenv';
 import { resolve } from 'path';
 
 // Sends one test mail through the configured SMTP settings.
-// Usage: npm run mail:test -- you@somewhere.com
+// Usage: pnpm run mail:test you@somewhere.com
 // Reads SMTP_* / MAIL_FROM from the environment; falls back to
 // .env.production (never committed) so it works from a fresh checkout.
 if (!process.env.SMTP_HOST) {
@@ -12,7 +12,7 @@ if (!process.env.SMTP_HOST) {
 
 const to = process.argv[2];
 if (!to) {
-  console.error('Usage: npm run mail:test -- <recipient>');
+  console.error('Usage: pnpm run mail:test <recipient>');
   process.exit(1);
 }
 if (!process.env.SMTP_HOST) {

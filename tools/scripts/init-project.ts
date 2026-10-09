@@ -19,7 +19,7 @@ const SKIP_DIRS = new Set([
   'coverage',
   '.idea',
 ]);
-const MAX_FILE_SIZE = 5 * 1024 * 1024; // package-lock.json must fit
+const MAX_FILE_SIZE = 5 * 1024 * 1024; // pnpm-lock.yaml must fit
 
 const args = process.argv.slice(2);
 const resetGit = args.includes('--reset-git');
@@ -27,9 +27,9 @@ const newName = args.find((arg) => !arg.startsWith('--'));
 
 if (!newName) {
   console.error(
-    'Usage: npm run init-project -- <new-project-name> [--reset-git]',
+    'Usage: pnpm run init-project <new-project-name> [--reset-git]',
   );
-  console.error('Example: npm run init-project -- somenewproject --reset-git');
+  console.error('Example: pnpm run init-project somenewproject --reset-git');
   process.exit(1);
 }
 
@@ -96,19 +96,28 @@ if (resetGit) {
   console.log('🗑  Resetting git history...');
   fs.rmSync(path.join(repoRoot, '.git'), { recursive: true, force: true });
   execSync('git init -b main && git add -A', { cwd: repoRoot });
-  execSync(`git commit -q -m "chore: init ${newKebab} from monorepo template"`, {
-    cwd: repoRoot,
-  });
+  execSync(
+    `git commit -q -m "chore: init ${newKebab} from monorepo template"`,
+    {
+      cwd: repoRoot,
+    },
+  );
   console.log('✓ Fresh git history on branch main (1 commit)');
 }
 
 console.log('');
 console.log('Next steps:');
-console.log('  1. npm run quality                 # lint + test + build must be green');
+console.log(
+  '  1. pnpm run quality                 # lint + test + build must be green',
+);
 console.log('  2. Rewrite README.md intro + review CLAUDE.md for your project');
-console.log('     (docs/TEMPLATE-COMPLETION-GUIDE.md is template-internal — delete it)');
+console.log(
+  '     (docs/TEMPLATE-COMPLETION-GUIDE.md is template-internal — delete it)',
+);
 if (resetGit) {
-  console.log('  3. git remote add origin <your-repo-url> && git push -u origin main');
+  console.log(
+    '  3. git remote add origin <your-repo-url> && git push -u origin main',
+  );
 }
 console.log('');
 console.log(

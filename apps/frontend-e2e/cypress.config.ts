@@ -12,9 +12,9 @@ export default defineConfig({
           'nx run api:serve & ' +
           'until curl -sf http://localhost:3000/api/health > /dev/null; do sleep 1; done; ' +
           'nx run frontend:serve:e2e',
-        production: 'npx nx run frontend:serve-static',
+        production: 'pnpm exec nx run frontend:serve-static',
       },
-      ciWebServerCommand: 'npx nx run frontend:serve-static',
+      ciWebServerCommand: 'pnpm exec nx run frontend:serve-static',
       ciBaseUrl: 'http://localhost:4200',
     }),
     baseUrl: 'http://localhost:4200',

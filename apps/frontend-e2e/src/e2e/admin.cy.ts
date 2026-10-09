@@ -7,7 +7,7 @@ describe('Admin user management', () => {
   const createUser = (email: string, role?: string) =>
     cy.exec(
       `cd "$(git rev-parse --show-toplevel)" && ` +
-        `npx tsx tools/scripts/create-user.ts ${email} ${password}${
+        `pnpm exec tsx tools/scripts/create-user.ts ${email} ${password}${
           role ? ` ${role}` : ''
         }`,
     );

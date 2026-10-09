@@ -5,10 +5,10 @@ import { resolve } from 'path';
 import { hashPassword } from '../../apps/api/src/app/auth/password.util';
 
 // Creates (or updates the password/role of) a user in the dev database.
-// Usage: npm run user:create -- <email> <password> [admin|moderator|user]
+// Usage: pnpm run user:create <email> <password> [admin|moderator|user]
 // For production, run on the server against the compose DB, e.g.:
 //   DATABASE_HOST=127.0.0.1 DATABASE_NAME=... DATABASE_USER=... \
-//   DATABASE_PASSWORD=... npx tsx tools/scripts/create-user.ts <email> <pw> admin
+//   DATABASE_PASSWORD=... pnpm exec tsx tools/scripts/create-user.ts <email> <pw> admin
 if (!process.env.DATABASE_HOST) {
   config({ path: resolve(__dirname, '../../.env.dev') });
 }
@@ -20,7 +20,7 @@ const email = rawEmail?.trim().toLowerCase();
 
 if (!email || !password || (role && !VALID_ROLES.includes(role))) {
   console.error(
-    'Usage: npm run user:create -- <email> <password> [admin|moderator|user]',
+    'Usage: pnpm run user:create <email> <password> [admin|moderator|user]',
   );
   process.exit(1);
 }

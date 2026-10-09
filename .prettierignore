@@ -4,3 +4,5 @@
 /.nx/cache
 /.nx/workspace-data
 .angular
+# pnpm owns the lockfile format; lint-staged must not rewrite it
+pnpm-lock.yaml

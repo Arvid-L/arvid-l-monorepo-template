@@ -19,7 +19,7 @@ one-command HTTPS. Branch → rename → deploy in under an hour.
   service/controller → shared types → FE api.service → component). Copy it
   for every feature; delete when you don't need the reference.
 - Migrations run on API boot; bundler-safe static import-map
-  (`_all-migrations.ts`). `npx nx run api:create-migration -- <name>`
+  (`_all-migrations.ts`). `pnpm exec nx run api:create-migration -- <name>`
   scaffolds one.
 
 **API baseline**
@@ -40,7 +40,7 @@ one-command HTTPS. Branch → rename → deploy in under an hour.
   `user:create` accounts are pre-verified (bootstrap/admin path)
 - **Roles:** admin/moderator/user hierarchy in the JWT; `@Roles()` +
   `RolesGuard` (`GET /auth/users` = the admin-endpoint pattern); promote
-  via `npm run user:create -- <email> <pw> admin`
+  via `pnpm run user:create <email> <pw> admin`
 - **Password reset:** forgot/reset endpoints (single-use hashed tokens, 1h,
   resets kill all sessions), mail via nodemailer — without SMTP\_\* env the
   mail lands in the log, so the flow works in dev out of the box
@@ -96,13 +96,13 @@ one-command HTTPS. Branch → rename → deploy in under an hour.
 - `backup-db.sh` (nightly cron: gzipped pg_dump, rotation, optional
   off-site push) + `restore-db.sh` — round-trip verified
 - **Mail:** documented Hetzner-webhosting SMTP path (NEW-PROJECT.md §5b:
-  konsoleH mailbox → `SMTP_*` env) + `npm run mail:test -- <recipient>`
+  konsoleH mailbox → `SMTP_*` env) + `pnpm run mail:test <recipient>`
   smoke script; any transactional provider works the same way
 - Postgres → PostGIS = one image line in both compose files
 
 **DX / CI**
 
-- `npm run init-project -- <name> --reset-git` — full rename, verified clean
+- `pnpm run init-project <name> --reset-git` — full rename, verified clean
 - CI: full pipeline on main, `nx affected` on PRs · Dependabot (majors for
   nx/Angular excluded — those go through `nx migrate`)
 - Husky + lint-staged · seed script · bruno collection · vscode extensions
@@ -112,14 +112,14 @@ one-command HTTPS. Branch → rename → deploy in under an hour.
 ```bash
 # New project (full walkthrough: docs/NEW-PROJECT.md)
 git clone <this-repo> myproject && cd myproject
-npm ci && npm run init-project -- myproject --reset-git
+pnpm install && pnpm run init-project myproject --reset-git
 
 # Daily dev
 docker compose up -d        # dev DB :5432, e2e DB :5433
-npm run serve:all           # api :3000/api, frontend :4200
-npm run quality             # lint + test + build
-npx nx e2e frontend-e2e     # real-browser e2e (needs ports 3000/4200 free)
-npm run user:create -- me@dev.local secret123 admin   # admin (pre-verified)
+pnpm run serve:all           # api :3000/api, frontend :4200
+pnpm run quality             # lint + test + build
+pnpm exec nx e2e frontend-e2e     # real-browser e2e (needs ports 3000/4200 free)
+pnpm run user:create me@dev.local secret123 admin   # admin (pre-verified)
 # register/login/forgot/reset/verify UI at /login etc.; verification and
 # reset mails land in the API log in dev (no SMTP needed) — grep the log
 # for the /verify-email link to activate a dev account
