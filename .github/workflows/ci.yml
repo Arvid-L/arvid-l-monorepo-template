@@ -5,6 +5,11 @@ on:
     branches: [main]
   pull_request:
 
+permissions:
+  contents: read
+  # nx-set-shas reads past workflow runs to find the last green main commit
+  actions: read
+
 jobs:
   main:
     runs-on: ubuntu-latest
